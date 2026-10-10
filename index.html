@@ -111,6 +111,7 @@
       .submit-actions{width:100%}
       .submit-send,.submit-cancel{flex:1}
     }
+
   </style>
 </head>
 <body>
@@ -136,6 +137,7 @@
     </div>
     <button id="limparFiltros" class="reset-button" type="button">Limpar filtros</button>
   </div>
+
 
   <div class="submit-bar-toggle">
     <button id="mostrarSubmissao" class="submit-bar-button" type="button" aria-expanded="false">Adicionar novo bar</button>
@@ -166,6 +168,7 @@
         <option value="">Selecionar tamanho</option>
         <option value="20">20 cl</option>
         <option value="25">25 cl</option>
+        <option value="35">35 cl</option>
       </select>
     </div>
 
@@ -223,6 +226,7 @@
     const novoPrecoElement=document.getElementById('novoPreco');
     const novoTamanhoElement=document.getElementById('novoTamanho');
     const novaZonaElement=document.getElementById('novaZona');
+
 
     let todosOsBares=[];
     let markersLayer=L.layerGroup().addTo(map);
@@ -458,7 +462,7 @@
           return;
         }
 
-        if(![20,25].includes(tamanho)){
+        if(![20,25,35].includes(tamanho)){
           tamanhoSelect.focus();
           return;
         }
@@ -539,6 +543,7 @@
                 <option value="">Tamanho</option>
                 <option value="20" ${tamanho===20?'selected':''}>20 cl</option>
                 <option value="25" ${tamanho===25?'selected':''}>25 cl</option>
+                <option value="35" ${tamanho===35?'selected':''}>35 cl</option>
               </select>
               <button class="feedback-send" type="button">Enviar</button>
             </div>
@@ -654,6 +659,7 @@
       },1500);
     }
 
+
     async function enviarNovaSubmissao(event){
       event.preventDefault();
 
@@ -664,7 +670,7 @@
       const tamanho=Number(novoTamanhoElement.value);
       const zona=novaZonaElement.value.trim();
 
-      if(!nome||!marca||!zona||!Number.isFinite(preco)||preco<=0||![20,25].includes(tamanho)){
+      if(!nome||!marca||!zona||!Number.isFinite(preco)||preco<=0||![20,25,35].includes(tamanho)){
         submitMessageElement.textContent='Preenche todos os campos corretamente.';
         return;
       }
@@ -754,6 +760,7 @@
         statusElement.textContent='Não foi possível carregar os bares. Verifica a ligação à API.';
       }
     }
+
 
     mostrarSubmissaoElement.addEventListener('click',()=>{
       const aberto=submitBarFormElement.classList.toggle('open');
