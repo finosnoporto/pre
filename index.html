@@ -528,7 +528,6 @@
     function createPopupContent(bar){
       const nome=escapeHtml(bar.nome);
       const marca=escapeHtml(bar.marca_cerveja);
-      const morada=escapeHtml(bar.morada);
       const zona=escapeHtml(bar.zona);
       const preco=formatPrice(bar.preco_fino);
       const tamanho=toFiniteNumberOrNull(bar.tamanho_cl);
@@ -543,7 +542,6 @@
           <div class="popup-price">${preco}</div>
           <div class="popup-info">${tamanhoTexto} · ${marca}</div>
           <div class="popup-info">${precoLitro}</div>
-          <div class="popup-info">${morada}</div>
           <div class="popup-info">${zona}</div>
           <div class="popup-updated">${atualizado}</div>
 
