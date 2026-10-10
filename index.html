@@ -17,28 +17,79 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin="">
   <style>
+    :root{
+      --brand-red:#7b1727;
+      --brand-red-dark:#54101b;
+      --brand-gold:#d8b15e;
+      --brand-gold-dark:#c39a43;
+      --brand-cream:#faf5e9;
+      --brand-cream-deep:#f3ead7;
+      --brand-text:#302326;
+    }
     *{box-sizing:border-box}
     html,body{margin:0;width:100%;height:100%;font-family:Arial,sans-serif;background:#f5f5f5;color:#222}
     body{display:flex;flex-direction:column}
-    header{padding:16px;background:#fff;border-bottom:1px solid #ddd;flex-shrink:0}
-    header h1{margin:0;font-size:24px}
-    header p{margin:6px 0 0;color:#666;font-size:14px}
-    .filter-toggle{padding:8px 16px;background:#fff;border-bottom:1px solid #ddd;flex-shrink:0}
-    .filter-button{height:38px;border:1px solid #ccc;border-radius:8px;padding:0 14px;background:#fff;font-size:14px;cursor:pointer}
-    .filter-button:hover{background:#f2f2f2}
-    .filters{display:none;gap:10px;flex-wrap:wrap;padding:12px 16px;background:#fff;border-bottom:1px solid #ddd;flex-shrink:0}
+
+    /* Cabeçalho com inspiração vínica/vermelho e dourado; mapa e pop-ups ficam inalterados. */
+    header{
+      padding:17px 20px 16px;
+      background:linear-gradient(135deg,var(--brand-red) 0%,var(--brand-red-dark) 100%);
+      color:#fff;
+      border-bottom:4px solid var(--brand-gold);
+      flex-shrink:0;
+      text-align:center;
+    }
+    header h1{margin:0;font-size:25px;line-height:1.2;letter-spacing:.2px;color:#fff}
+    header p{margin:7px 0 0;color:#f8ead1;font-size:14px;line-height:1.4}
+
+    /* Os dois controlos principais ficam na mesma linha, também em ecrãs móveis. */
+    .top-actions{
+      display:flex;align-items:stretch;gap:10px;
+      padding:10px 16px 12px;
+      background:var(--brand-cream);
+      flex-shrink:0;
+    }
+    .filter-toggle,.submit-bar-toggle{
+      display:flex;flex:1;min-width:0;justify-content:center;
+      padding:0;background:transparent;flex-shrink:1;
+    }
+    .filter-button{
+      width:100%;max-width:none;min-height:42px;
+      border:1px solid var(--brand-red);border-radius:10px;
+      padding:9px 12px;background:var(--brand-red);color:#fff;
+      font-size:14px;font-weight:700;cursor:pointer;
+      box-shadow:0 2px 4px rgba(84,16,27,.12);
+      transition:background .15s ease,transform .15s ease;
+    }
+    .filter-button:hover{background:var(--brand-red-dark)}
+    .filter-button:active,.submit-bar-button:active{transform:translateY(1px)}
+    .filter-button:focus-visible,.submit-bar-button:focus-visible,.reset-button:focus-visible{outline:3px solid var(--brand-gold);outline-offset:2px}
+
+    .filters{
+      display:none;gap:10px;flex-wrap:wrap;justify-content:center;align-items:flex-end;
+      padding:12px 16px;background:#fffaf1;border-bottom:1px solid #e4d4b0;flex-shrink:0;
+    }
     .filters.open{display:flex}
-    .filter-group{display:flex;flex-direction:column;gap:4px}
-    .filter-group label{font-size:12px;color:#666}
-    .filter-group input,.filter-group select,.reset-button{height:38px;border:1px solid #ccc;border-radius:8px;padding:0 10px;background:#fff;font-size:14px}
-    .filter-group input{width:130px}
-    .filter-group select{min-width:160px}
-    .reset-button{margin-top:auto;cursor:pointer}
-    .reset-button:hover{background:#f2f2f2}
+    .filter-group{display:flex;flex-direction:column;gap:5px}
+    .filter-group label{font-size:12px;color:var(--brand-text);font-weight:700}
+    .filter-group input,.filter-group select,.reset-button{
+      height:40px;border:1px solid #d8c9ac;border-radius:8px;padding:0 10px;
+      background:#fff;color:#292323;font-size:14px;
+    }
+    .filter-group input{width:150px}
+    .filter-group select{min-width:170px}
+    .filter-group input:focus,.filter-group select:focus,.submit-group input:focus,.submit-group select:focus{
+      outline:2px solid var(--brand-gold);outline-offset:1px;border-color:var(--brand-red);
+    }
+    .reset-button{margin-top:auto;cursor:pointer;background:var(--brand-cream);border-color:var(--brand-red);color:var(--brand-red);font-weight:700;padding:0 14px}
+    .reset-button:hover{background:var(--brand-cream-deep)}
+
     .status{padding:9px 16px;background:#fff3cd;color:#664d03;font-size:14px;border-bottom:1px solid #ddd;flex-shrink:0}
     .status.error{background:#f8d7da;color:#842029}
     .hidden{display:none}
     #map{width:100%;flex:1;min-height:0}
+
+    /* Estilos dos pop-ups preservados. */
     .popup-title{font-weight:bold;font-size:17px;margin-bottom:8px}
     .popup-price{font-size:20px;font-weight:bold;margin-bottom:5px}
     .popup-info{color:#555;font-size:14px;margin-bottom:4px}
@@ -65,33 +116,45 @@
     .price-label:after{content:'';position:absolute;bottom:-5px;left:50%;width:8px;height:8px;background:#fff;border-right:1px solid #bbb;border-bottom:1px solid #bbb;transform:translateX(-50%) rotate(45deg)}
     .blue-pin{position:absolute;width:25px;height:41px;left:50%;bottom:0;transform:translateX(-50%);z-index:1}
 
-    .submit-bar-toggle{padding:8px 16px;background:#fff;border-bottom:1px solid #ddd;flex-shrink:0}
-    .submit-bar-button{height:38px;border:1px solid #ccc;border-radius:8px;padding:0 14px;background:#fff;font-size:14px;cursor:pointer}
-    .submit-bar-button:hover{background:#f2f2f2}
-    .submit-bar-form{display:none;gap:10px;flex-wrap:wrap;padding:12px 16px;background:#fff;border-bottom:1px solid #ddd;flex-shrink:0}
+    .submit-bar-button{
+      width:100%;max-width:none;min-height:42px;
+      border:1px solid var(--brand-gold-dark);border-radius:10px;
+      padding:9px 16px;background:var(--brand-gold);color:var(--brand-red-dark);
+      font-size:15px;font-weight:700;cursor:pointer;
+      box-shadow:0 2px 4px rgba(84,16,27,.09);
+      transition:background .15s ease,transform .15s ease;
+    }
+    .submit-bar-button:hover{background:var(--brand-gold-dark)}
+    .submit-bar-form{
+      display:none;gap:10px;flex-wrap:wrap;justify-content:center;
+      padding:13px 16px;background:#fffaf1;border-bottom:1px solid #e4d4b0;flex-shrink:0;
+    }
     .submit-bar-form.open{display:flex}
-    .submit-bar-form .form-title{width:100%;font-size:15px;font-weight:700;margin-bottom:2px}
-    .submit-bar-form .form-help{width:100%;font-size:12px;color:#666;margin-bottom:2px}
-    .submit-group{display:flex;flex-direction:column;gap:4px}
-    .submit-group label{font-size:12px;color:#666}
-    .submit-group input,.submit-group select{height:38px;border:1px solid #ccc;border-radius:8px;padding:0 10px;background:#fff;font-size:14px}
+    .submit-bar-form .form-title{width:100%;font-size:16px;font-weight:700;color:var(--brand-red-dark);text-align:center;margin-bottom:2px}
+    .submit-bar-form .form-help{width:100%;font-size:12px;color:#6d6260;text-align:center;margin-bottom:2px}
+    .submit-group{display:flex;flex-direction:column;gap:5px}
+    .submit-group label{font-size:12px;color:var(--brand-text);font-weight:700}
+    .submit-group input,.submit-group select{height:40px;border:1px solid #d8c9ac;border-radius:8px;padding:0 10px;background:#fff;font-size:14px}
     .submit-group input{width:180px}
     .submit-group select{min-width:180px}
     .submit-actions{display:flex;gap:8px;align-items:flex-end}
-    .submit-send,.submit-cancel{height:38px;border:1px solid #ccc;border-radius:8px;padding:0 14px;font-size:14px;font-weight:600;cursor:pointer}
-    .submit-send{background:#222;color:#fff}
-    .submit-cancel{background:#fff}
-    .submit-message{width:100%;font-size:13px;font-weight:600;color:#555}
+    .submit-send,.submit-cancel{min-height:40px;border:1px solid #ccc;border-radius:8px;padding:0 14px;font-size:14px;font-weight:700;cursor:pointer}
+    .submit-send{background:var(--brand-red);border-color:var(--brand-red);color:#fff}
+    .submit-send:hover{background:var(--brand-red-dark)}
+    .submit-cancel{background:#fff;border-color:#d8c9ac;color:var(--brand-text)}
+    .submit-cancel:hover{background:var(--brand-cream-deep)}
+    .submit-message{width:100%;font-size:13px;font-weight:600;color:#555;text-align:center}
 
     @media(max-width:600px){
-      header{padding:14px}
-      header h1{font-size:21px}
-      header p{font-size:13px}
-      .filter-toggle{padding:8px 10px}
-      .filters{padding:10px}
-      .filter-group{flex:1;min-width:140px}
-      .filter-group input,.filter-group select{width:100%}
-      .reset-button{width:100%;margin-top:4px}
+      header{padding:15px 12px 14px}
+      header h1{font-size:22px;line-height:1.25}
+      header p{font-size:13px;margin-top:6px}
+      .top-actions{gap:8px;padding:8px 10px 10px}
+      .filter-button,.submit-bar-button{max-width:none;min-height:44px;font-size:13px;padding:8px 5px}
+      .filters{padding:10px 12px;gap:9px}
+      .filter-group{flex:1;min-width:calc(50% - 5px)}
+      .filter-group input,.filter-group select{width:100%;min-width:0}
+      .reset-button{width:100%;height:40px;margin-top:1px}
       .leaflet-popup-content{width:calc(100vw - 70px)!important;max-width:245px!important;margin:10px}
       .popup-title{font-size:15px;margin-bottom:6px}
       .popup-price{font-size:18px;margin-bottom:4px}
@@ -103,15 +166,22 @@
       .feedback-input{font-size:12px}
       .feedback-send{font-size:12px}
       .price-label{font-size:11px;padding:3px 6px}
-
-      .submit-bar-toggle{padding:8px 10px}
-      .submit-bar-form{padding:10px}
-      .submit-group{flex:1;min-width:140px}
-      .submit-group input,.submit-group select{width:100%}
+      .submit-bar-form{padding:11px 12px;gap:9px}
+      .submit-group{flex:1;min-width:calc(50% - 5px)}
+      .submit-group input,.submit-group select{width:100%;min-width:0}
       .submit-actions{width:100%}
-      .submit-send,.submit-cancel{flex:1}
+      .submit-send,.submit-cancel{flex:1;min-height:42px}
+      .submit-bar-form .form-title,.submit-bar-form .form-help{max-width:100%}
     }
 
+    @media(max-width:360px){
+      .top-actions{gap:6px;padding-left:8px;padding-right:8px}
+      .filter-button,.submit-bar-button{font-size:12px;padding-left:3px;padding-right:3px}
+    }
+
+    @media(prefers-reduced-motion:reduce){
+      .filter-button,.submit-bar-button{transition:none}
+    }
   </style>
 </head>
 <body>
@@ -120,8 +190,13 @@
     <p>Encontra e compara finos no Porto</p>
   </header>
 
-  <div class="filter-toggle">
-    <button id="mostrarFiltros" class="filter-button" type="button" aria-expanded="false">Filtros</button>
+  <div class="top-actions">
+    <div class="filter-toggle">
+      <button id="mostrarFiltros" class="filter-button" type="button" aria-expanded="false">Filtros</button>
+    </div>
+    <div class="submit-bar-toggle">
+      <button id="mostrarSubmissao" class="submit-bar-button" type="button" aria-expanded="false">Adicionar novo bar</button>
+    </div>
   </div>
 
   <div id="filters" class="filters">
@@ -138,10 +213,6 @@
     <button id="limparFiltros" class="reset-button" type="button">Limpar filtros</button>
   </div>
 
-
-  <div class="submit-bar-toggle">
-    <button id="mostrarSubmissao" class="submit-bar-button" type="button" aria-expanded="false">Adicionar novo bar</button>
-  </div>
 
   <form id="submitBarForm" class="submit-bar-form">
     <div class="form-title">Adicionar um bar</div>
