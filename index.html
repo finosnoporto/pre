@@ -369,6 +369,7 @@
     }
 
     async function enviarFeedback(barId,tamanho,tipo,precoReportado=null){
+      const inicioPedido=performance.now();
       const params=new URLSearchParams();
       params.append('bar_id',String(barId));
       params.append('tamanho_cl',String(tamanho));
@@ -378,22 +379,41 @@
         params.append('preco_reportado',String(precoReportado));
       }
 
-      const response=await fetch(API_URL,{
-        method:'POST',
-        body:params
-      });
+      try{
+        const response=await fetch(API_URL,{
+          method:'POST',
+          body:params
+        });
 
-      if(!response.ok){
-        throw new Error(`Erro HTTP ${response.status}`);
+        if(!response.ok){
+          throw new Error(`Erro HTTP ${response.status}`);
+        }
+
+        const data=await response.json();
+
+        if(!data.sucesso){
+          throw new Error(data.erro||'Não foi possível enviar o feedback.');
+        }
+
+        const duracaoMs=Math.round(performance.now()-inicioPedido);
+        console.info(`[Finos no Porto] Feedback "${tipo}" concluído em ${duracaoMs} ms.`);
+        registarEventoAnalytics('feedback_request_completed',{
+          feedback_type:tipo,
+          duration_ms:duracaoMs,
+          tamanho_cl:Number(tamanho)
+        });
+
+        return data;
+      }catch(error){
+        const duracaoMs=Math.round(performance.now()-inicioPedido);
+        console.warn(`[Finos no Porto] Feedback "${tipo}" falhou após ${duracaoMs} ms.`,error);
+        registarEventoAnalytics('feedback_request_failed',{
+          feedback_type:tipo,
+          duration_ms:duracaoMs,
+          tamanho_cl:Number(tamanho)
+        });
+        throw error;
       }
-
-      const data=await response.json();
-
-      if(!data.sucesso){
-        throw new Error(data.erro||'Não foi possível enviar o feedback.');
-      }
-
-      return data;
     }
 
     function configurarFeedback(popupElement,bar,marker){
@@ -422,6 +442,7 @@
       yesButton.addEventListener('click',async()=>{
         yesButton.disabled=true;
         noButton.disabled=true;
+        mostrarMensagem('A enviar confirmação...');
 
         try{
           await enviarFeedback(
@@ -470,6 +491,7 @@
         sendButton.disabled=true;
         input.disabled=true;
         tamanhoSelect.disabled=true;
+        mostrarMensagem('A enviar correção...');
 
         try{
           await enviarFeedback(
