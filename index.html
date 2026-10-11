@@ -220,11 +220,14 @@
       .feedback-input{font-size:12px}
       .feedback-send{font-size:12px}
       .price-label{font-size:11px;padding:3px 6px}
-      .submit-bar-form{padding:11px 12px;gap:9px}
-      .submit-group{flex:1;min-width:calc(50% - 5px)}
-      .submit-group input,.submit-group select{width:100%;min-width:0}
-      .submit-actions{width:100%}
-      .submit-send,.submit-cancel{flex:1;min-height:42px}
+      /* Formulário mais compacto em telemóveis, mantendo tamanhos de letra. */
+      .submit-bar-form{padding:8px 10px 9px;gap:6px}
+      .submit-bar-form .form-title{margin-bottom:0}
+      .submit-bar-form .form-help{margin-bottom:0;line-height:1.2}
+      .submit-group{flex:1;min-width:calc(50% - 4px);gap:3px}
+      .submit-group input,.submit-group select{width:100%;min-width:0;height:36px;padding-left:9px;padding-right:9px}
+      .submit-actions{width:100%;gap:7px}
+      .submit-send,.submit-cancel{flex:1;min-height:38px}
       .submit-bar-form .form-title,.submit-bar-form .form-help{max-width:100%}
     }
 
@@ -286,7 +289,7 @@
 
   <form id="submitBarForm" class="submit-bar-form">
     <div class="form-title">Adicionar um bar</div>
-    <div class="form-help">Preenche os dados abaixo. A submissão será verificada antes de aparecer no mapa.</div>
+    <div class="form-help">A submissão será verificada antes de aparecer no mapa.</div>
 
     <div class="submit-group">
       <label for="novoNomeBar">Nome do bar</label>
