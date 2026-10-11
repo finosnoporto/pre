@@ -819,10 +819,17 @@
     }
 
     async function carregarBares(){
+      // performance.now() mede o tempo desde o início da navegação da página.
+      let inicioPedidoApi=null;
+      let tempoApiMs=null;
+      let tempoMapaMs=null;
+      let numeroBaresRecebidos=0;
+
       try{
         statusElement.classList.remove('error','hidden');
         statusElement.textContent='A carregar os bares...';
 
+        inicioPedidoApi=performance.now();
         const response=await fetch(API_URL);
 
         if(!response.ok){
@@ -830,6 +837,7 @@
         }
 
         const data=await response.json();
+        tempoApiMs=performance.now()-inicioPedidoApi;
 
         if(!data.sucesso){
           throw new Error(data.erro||'A API devolveu um erro.');
@@ -840,12 +848,44 @@
         }
 
         todosOsBares=data.bares;
+        numeroBaresRecebidos=todosOsBares.length;
+
+        const inicioRenderizacaoMapa=performance.now();
         preencherZonas();
         mostrarBares();
+        tempoMapaMs=performance.now()-inicioRenderizacaoMapa;
+
+        // O total é contado desde o início da navegação até os bares estarem
+        // recebidos, processados e adicionados ao mapa.
+        const metricasCarregamento={
+          tempo_total_ms:Math.round(performance.now()),
+          tempo_api_ms:Math.round(tempoApiMs),
+          tempo_mapa_ms:Math.round(tempoMapaMs),
+          bares_recebidos:numeroBaresRecebidos
+        };
+
+        console.info('[Finos no Porto] Medição do carregamento inicial dos bares:',metricasCarregamento);
+        registarEventoAnalytics('bars_initial_load_complete',{
+          load_time_ms:metricasCarregamento.tempo_total_ms,
+          api_time_ms:metricasCarregamento.tempo_api_ms,
+          map_render_time_ms:metricasCarregamento.tempo_mapa_ms,
+          bars_received_count:numeroBaresRecebidos
+        });
 
         console.log('Dados recebidos da API:',data);
       }catch(error){
-        console.error('Erro ao carregar os bares:',error);
+        const tempoTotalFalhaMs=Math.round(performance.now());
+        if(inicioPedidoApi!==null&&tempoApiMs===null){
+          tempoApiMs=performance.now()-inicioPedidoApi;
+        }
+
+        console.error(`[Finos no Porto] Falha no carregamento inicial após ${tempoTotalFalhaMs} ms.`,error);
+        const parametrosFalha={load_time_ms:tempoTotalFalhaMs};
+        if(tempoApiMs!==null){
+          parametrosFalha.api_time_ms=Math.round(tempoApiMs);
+        }
+        registarEventoAnalytics('bars_initial_load_failed',parametrosFalha);
+
         statusElement.classList.remove('hidden');
         statusElement.classList.add('error');
         statusElement.textContent='Não foi possível carregar os bares. Verifica a ligação à API.';
