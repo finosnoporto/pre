@@ -212,6 +212,32 @@
     .hidden{display:none}
     #map{width:100%;flex:1;min-height:0}
 
+    /* Botão flutuante de localização, no canto inferior esquerdo do mapa. */
+    .finos-location-control-wrap{display:flex;flex-direction:column-reverse;align-items:flex-start;gap:8px}
+    .finos-location-button{
+      display:flex;align-items:center;justify-content:center;width:42px;height:42px;padding:0;
+      border:1px solid #d8c9ac;border-radius:10px;background:#fff;color:var(--brand-red);
+      box-shadow:0 2px 8px rgba(48,35,38,.2);cursor:pointer;
+      transition:background .15s ease,transform .15s ease;
+    }
+    .finos-location-button:hover{background:var(--brand-cream)}
+    .finos-location-button:active{transform:translateY(1px)}
+    .finos-location-button:focus-visible{outline:3px solid var(--brand-gold);outline-offset:2px}
+    .finos-location-button svg{width:22px;height:22px;display:block}
+    .finos-location-button:disabled{opacity:.7;cursor:wait}
+    .finos-location-button.is-loading svg{animation:location-pulse 1s ease-in-out infinite}
+    .location-control-message{
+      display:none;max-width:min(72vw,260px);padding:9px 11px;border:1px solid #e0d2b8;
+      border-radius:8px;background:#fff;color:var(--brand-text);font-size:12px;line-height:1.4;
+      box-shadow:0 2px 8px rgba(48,35,38,.18);
+    }
+    .location-control-message.visible{display:block}
+    .location-control-message.error{background:#fff2f0;border-color:#e4b7b0;color:#842029}
+    @keyframes location-pulse{50%{opacity:.45}}
+    .user-location-icon-shell{background:transparent;border:0}
+    .user-location-dot{display:block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;
+      background:#287be8;box-shadow:0 0 0 2px rgba(40,123,232,.28),0 2px 7px rgba(0,0,0,.35)}
+
     /* Estilos dos pop-ups preservados. */
     .popup-title{font-weight:bold;font-size:17px;margin-bottom:8px}
     .popup-price{font-size:20px;font-weight:bold;margin-bottom:5px}
@@ -290,6 +316,8 @@
       .filter-group{flex:1;min-width:calc(50% - 5px)}
       .filter-group input,.filter-group select{width:100%;min-width:0}
       .reset-button{width:100%;height:40px;margin-top:1px}
+      .finos-location-button{width:42px;height:42px}
+      .location-control-message{max-width:min(72vw,240px)}
       .leaflet-popup-content{width:calc(100vw - 70px)!important;max-width:245px!important;margin:10px}
       .popup-title{font-size:15px;margin-bottom:6px}
       .popup-price{font-size:18px;margin-bottom:4px}
@@ -512,6 +540,131 @@
     let todosOsBares=[];
     let markersLayer=L.layerGroup().addTo(map);
     let markersByBarId=new Map();
+    let marcadorUtilizador=null;
+    let coordenadasLocalizacaoUtilizador=null;
+    let pedidoLocalizacaoEmCurso=false;
+    let carregamentoInicialConcluido=false;
+    let preservarLocalizacaoNoProximoRender=false;
+    let botaoLocalizacaoElement=null;
+    let mensagemLocalizacaoElement=null;
+    let timeoutMensagemLocalizacao=null;
+
+    const controloLocalizacao=L.control({position:'bottomleft'});
+    controloLocalizacao.onAdd=function(){
+      const container=L.DomUtil.create('div','finos-location-control-wrap');
+      botaoLocalizacaoElement=L.DomUtil.create('button','finos-location-button',container);
+      botaoLocalizacaoElement.type='button';
+      botaoLocalizacaoElement.title='Perto de mim';
+      botaoLocalizacaoElement.setAttribute('aria-label','Centrar o mapa na minha localização');
+      botaoLocalizacaoElement.innerHTML=`
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="7"></circle>
+          <circle cx="12" cy="12" r="2"></circle>
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+        </svg>`;
+
+      mensagemLocalizacaoElement=L.DomUtil.create('div','location-control-message',container);
+      mensagemLocalizacaoElement.setAttribute('role','status');
+      mensagemLocalizacaoElement.setAttribute('aria-live','polite');
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+      L.DomEvent.on(botaoLocalizacaoElement,'click',localizarUtilizador);
+      return container;
+    };
+    controloLocalizacao.addTo(map);
+
+    function mostrarMensagemLocalizacao(texto,erro=false,duracao=4500){
+      if(!mensagemLocalizacaoElement)return;
+      if(timeoutMensagemLocalizacao!==null)clearTimeout(timeoutMensagemLocalizacao);
+      mensagemLocalizacaoElement.textContent=texto;
+      mensagemLocalizacaoElement.classList.toggle('error',erro);
+      mensagemLocalizacaoElement.classList.add('visible');
+      timeoutMensagemLocalizacao=setTimeout(()=>{
+        mensagemLocalizacaoElement.classList.remove('visible');
+        timeoutMensagemLocalizacao=null;
+      },duracao);
+    }
+
+    function terminarPedidoLocalizacao(){
+      pedidoLocalizacaoEmCurso=false;
+      if(!botaoLocalizacaoElement)return;
+      botaoLocalizacaoElement.disabled=false;
+      botaoLocalizacaoElement.classList.remove('is-loading');
+      botaoLocalizacaoElement.removeAttribute('aria-busy');
+      botaoLocalizacaoElement.title='Perto de mim';
+    }
+
+    function localizarUtilizador(){
+      if(pedidoLocalizacaoEmCurso)return;
+
+      if(!window.isSecureContext){
+        mostrarMensagemLocalizacao('A localização requer uma ligação segura (HTTPS).',true,6000);
+        registarEventoAnalytics('user_location_failed',{error_code:'insecure_context'});
+        return;
+      }
+      if(!navigator.geolocation){
+        mostrarMensagemLocalizacao('Este navegador não suporta a localização.',true,6000);
+        registarEventoAnalytics('user_location_failed',{error_code:'unsupported'});
+        return;
+      }
+
+      pedidoLocalizacaoEmCurso=true;
+      botaoLocalizacaoElement.disabled=true;
+      botaoLocalizacaoElement.classList.add('is-loading');
+      botaoLocalizacaoElement.setAttribute('aria-busy','true');
+      botaoLocalizacaoElement.title='A obter localização…';
+      mostrarMensagemLocalizacao('A obter a tua localização…',false,15000);
+      registarEventoAnalytics('user_location_requested');
+
+      navigator.geolocation.getCurrentPosition(position=>{
+        const latitude=position.coords.latitude;
+        const longitude=position.coords.longitude;
+        if(!Number.isFinite(latitude)||!Number.isFinite(longitude)){
+          terminarPedidoLocalizacao();
+          mostrarMensagemLocalizacao('Não foi possível obter uma localização válida. Tenta novamente.',true,6000);
+          registarEventoAnalytics('user_location_failed',{error_code:'invalid_coordinates'});
+          return;
+        }
+
+        coordenadasLocalizacaoUtilizador=[latitude,longitude];
+        preservarLocalizacaoNoProximoRender=!carregamentoInicialConcluido;
+        if(!marcadorUtilizador){
+          const iconeLocalizacao=L.divIcon({
+            className:'user-location-icon-shell',
+            html:'<span class="user-location-dot" aria-hidden="true"></span>',
+            iconSize:[24,24],
+            iconAnchor:[12,12]
+          });
+          marcadorUtilizador=L.marker(coordenadasLocalizacaoUtilizador,{
+            icon:iconeLocalizacao,
+            keyboard:false,
+            interactive:false,
+            zIndexOffset:1000
+          }).addTo(map);
+        }else{
+          marcadorUtilizador.setLatLng(coordenadasLocalizacaoUtilizador);
+        }
+
+        map.setView(coordenadasLocalizacaoUtilizador,Math.max(map.getZoom(),16),{animate:true});
+        terminarPedidoLocalizacao();
+        mostrarMensagemLocalizacao('Localização encontrada.',false,3000);
+        registarEventoAnalytics('user_location_success',{accuracy_m:Math.round(position.coords.accuracy||0)});
+      },error=>{
+        terminarPedidoLocalizacao();
+        let mensagem='Não foi possível obter a localização. Tenta novamente.';
+        if(error.code===1){
+          mensagem='A localização foi recusada. Podes ativá-la nas definições do navegador.';
+        }else if(error.code===2){
+          mensagem='A localização não está disponível. Verifica o GPS e tenta novamente.';
+        }else if(error.code===3){
+          mensagem='A localização demorou demasiado tempo. Tenta novamente.';
+        }
+        mostrarMensagemLocalizacao(mensagem,true,6500);
+        console.warn('[Finos no Porto] Não foi possível obter a localização:',error);
+        registarEventoAnalytics('user_location_failed',{error_code:String(error.code||'unknown')});
+      },{enableHighAccuracy:true,timeout:12000,maximumAge:30000});
+    }
 
     function escapeHtml(value){
       if(value===null||value===undefined)return '';
@@ -1068,7 +1221,12 @@
         markers.push(marker);
       });
 
-      if(markers.length>0){
+      if(preservarLocalizacaoNoProximoRender&&coordenadasLocalizacaoUtilizador){
+        // Se o utilizador pediu a localização enquanto os bares carregavam,
+        // não deixar que o fim do carregamento volte a centrar o mapa no Porto inteiro.
+        map.setView(coordenadasLocalizacaoUtilizador,Math.max(map.getZoom(),16));
+        preservarLocalizacaoNoProximoRender=false;
+      }else if(markers.length>0){
         const group=L.featureGroup(markers);
         map.fitBounds(group.getBounds(),{
           padding:[40,40],
@@ -1192,6 +1350,7 @@
         const inicioRenderizacaoMapa=performance.now();
         preencherZonas();
         mostrarBares();
+        carregamentoInicialConcluido=true;
         tempoMapaMs=performance.now()-inicioRenderizacaoMapa;
 
         // O total é contado desde o início da navegação até os bares estarem
