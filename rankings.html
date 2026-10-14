@@ -1,1 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#7b1727">
+  <meta name="description" content="Descobre os finos mais baratos do Porto e compara preços por litro e por zona.">
+  <link rel="icon" type="image/png" href="logo_site.png">
+  <title>Rankings dos finos mais baratos | Finos no Porto</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QRLRD1YYF1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QRLRD1YYF1');
+  </script>
+  <style>
+    :root{--brand-red:#7b1727;--brand-red-dark:#54101b;--brand-gold:#d8b15e;--brand-gold-dark:#c39a43;--brand-cream:#faf5e9;--brand-cream-deep:#f3ead7;--brand-text:#302326;--muted:#75696b;--line:#e4d7c1}
+    *{box-sizing:border-box}
+    html{min-height:100%;background:#f7f4ee}
+    body{margin:0;font-family:Arial,sans-serif;color:var(--brand-text);background:#f7f4ee;line-height:1.45}
+    header{padding:19px 16px 18px;background:linear-gradient(135deg,var(--brand-red),var(--brand-red-dark));color:#fff;text-align:center;border-bottom:3px solid var(--brand-gold)}
+    header h1{margin:0;font-size:clamp(22px,5vw,29px);line-height:1.2}
+    header p{margin:7px 0 0;color:#f8ead1;font-size:14px}
+    .top-nav{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;padding:10px 12px;background:var(--brand-cream);border-bottom:1px solid var(--line)}
+    .top-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 13px;border:1px solid var(--brand-red);border-radius:9px;color:var(--brand-red);font-size:14px;font-weight:700;text-decoration:none}
+    .top-nav a[aria-current="page"]{background:var(--brand-red);color:#fff}
+    main{width:min(100% - 28px,900px);margin:20px auto 40px}
+    .intro{margin:0 auto 18px;text-align:center;max-width:650px}
+    .intro h2{margin:0 0 7px;color:var(--brand-red-dark);font-size:clamp(21px,4.5vw,28px)}
+    .intro p{margin:0;color:#63585a;font-size:14px}
+    .ranking-section{margin:18px 0 24px}
+    .section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 11px}
+    .section-heading h2{margin:0;color:var(--brand-red-dark);font-size:20px;line-height:1.25}
+    .section-tag{flex-shrink:0;padding:5px 8px;border-radius:99px;background:#f0e4cc;color:var(--brand-red-dark);font-size:11px;font-weight:700}
+    .zone-picker{display:flex;flex-direction:column;gap:6px;margin:0 0 12px}
+    .zone-picker label{font-size:13px;font-weight:700}
+    .zone-picker select{width:100%;min-height:46px;border:1px solid #d8c9ac;border-radius:10px;padding:0 12px;background:#fff;color:var(--brand-text);font:inherit;font-size:15px}
+    .zone-picker select:focus-visible,.top-nav a:focus-visible,.maps-link:focus-visible{outline:3px solid var(--brand-gold);outline-offset:2px}
+    .ranking-list{display:grid;gap:9px}
+    .rank-card{display:grid;grid-template-columns:38px minmax(0,1fr);gap:11px;padding:13px;background:#fff;border:1px solid #e7dfd2;border-radius:13px;box-shadow:0 2px 6px rgba(48,35,38,.045)}
+    .rank-number{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--brand-cream-deep);color:var(--brand-red);font-size:16px;font-weight:800}
+    .rank-card:first-child .rank-number{background:var(--brand-gold);color:var(--brand-red-dark)}
+    .rank-content{min-width:0}
+    .rank-topline{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .bar-name{margin:0;font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+    .zone-name{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .price-per-litre{white-space:nowrap;text-align:right;color:var(--brand-red);font-size:17px;font-weight:800;line-height:1.2}
+    .price-per-litre small{display:block;margin-top:3px;color:#6c5d5f;font-size:10px;font-weight:700}
+    .bar-details{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:10px;font-size:13px}
+    .bar-details span{display:inline-flex;align-items:center;gap:4px}
+    .serving-price{font-weight:800;color:var(--brand-text)}
+    .maps-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;margin-top:11px;padding:7px 10px;border:1px solid #d8c9ac;border-radius:8px;background:#fffaf1;color:var(--brand-red);font-size:13px;font-weight:700;text-decoration:none}
+    .maps-link:hover{background:var(--brand-cream-deep)}
+    .status{padding:15px;border:1px solid var(--line);border-radius:10px;background:#fffaf1;color:#66595b;font-size:14px;text-align:center}
+    .status.error{border-color:#e4b7b0;background:#fff2f0;color:#842029}
+    .footnote{margin:10px 2px 0;color:#786d6f;font-size:12px;line-height:1.45}
+    footer{padding:20px 16px 26px;background:#f0e8d9;border-top:1px solid var(--line);text-align:center;color:#6d6260;font-size:12px}
+    footer a{color:var(--brand-red);font-weight:700;text-decoration:none}
+    @media(min-width:650px){main{margin-top:28px}.ranking-section{margin-bottom:30px}.rank-card{padding:15px 17px;grid-template-columns:42px minmax(0,1fr);gap:13px}.rank-number{width:40px;height:40px}.bar-name{font-size:17px}.price-per-litre{font-size:19px}.bar-details{font-size:14px}.rank-card:hover{border-color:#d7c39d}}
+    @media(max-width:380px){main{width:calc(100% - 20px);margin-top:15px}.rank-card{padding:10px;grid-template-columns:32px minmax(0,1fr);gap:8px}.rank-number{width:31px;height:33px;font-size:14px}.rank-topline{gap:5px}.bar-name{font-size:14px}.price-per-litre{font-size:15px}.price-per-litre small{font-size:9px}.bar-details{font-size:12px}.maps-link{min-height:40px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Finos no Porto</h1>
+    <p>Encontra e compara o preço dos finos no Porto</p>
+  </header>
+  <nav class="top-nav" aria-label="Navegação principal">
+    <a href="index.html">Mapa de bares</a>
+    <a href="rankings.html" aria-current="page">Rankings</a>
+  </nav>
+  <main>
+    <section class="intro">
+      <h2>Os finos mais baratos do Porto</h2>
+      <p>Compara o preço por litro e descobre onde cada fino fica mais em conta. Toca em «Ver no Google Maps» para abrir diretamente a localização do bar.</p>
+    </section>
+
+    <section class="ranking-section" aria-labelledby="tituloRankingGeral">
+      <div class="section-heading"><h2 id="tituloRankingGeral">Top 5 — Porto</h2><span class="section-tag">Menor preço por litro</span></div>
+      <div id="estadoGeral" class="status" role="status" aria-live="polite">A carregar os preços...</div>
+      <div id="rankingGeral" class="ranking-list" hidden></div>
+      <p class="footnote">A ordenação é feita pelo preço por litro. Em caso de empate, aparece primeiro o fino com menor preço por unidade.</p>
+    </section>
+
+    <section class="ranking-section" aria-labelledby="tituloRankingZona">
+      <div class="section-heading"><h2 id="tituloRankingZona">Top 5 por zona</h2><span class="section-tag">Escolhe a zona</span></div>
+      <div class="zone-picker"><label for="seletorZona">Zona do Porto</label><select id="seletorZona" disabled><option value="">A carregar zonas...</option></select></div>
+      <div id="estadoZona" class="status" role="status" aria-live="polite">A carregar os preços...</div>
+      <div id="rankingZona" class="ranking-list" hidden></div>
+      <p class="footnote">Se uma zona tiver menos de cinco bares com dados de preço completos, serão mostrados apenas os resultados disponíveis.</p>
+    </section>
+  </main>
+  <footer>Encontraste um preço errado ou queres sugerir um bar? <a href="index.html">Visita o mapa</a> ou escreve para <a href="mailto:finosnoporto@gmail.com">finosnoporto@gmail.com</a>.</footer>
+
+  <script>
+    'use strict';
+    const API_URL='https://script.google.com/macros/s/AKfycbxP-5Ibk9MRKdGRNYnXNwdgPwOzi1XUlR4ccm7CGtxHudJsKzRznWniCgN6Ugx-C-4ZiQ/exec';
+    const estadoGeral=document.getElementById('estadoGeral');
+    const rankingGeral=document.getElementById('rankingGeral');
+    const estadoZona=document.getElementById('estadoZona');
+    const rankingZona=document.getElementById('rankingZona');
+    const seletorZona=document.getElementById('seletorZona');
+    let baresElegiveis=[];
+
+    function registarEventoAnalytics(nome,parametros={}){
+      if(typeof window.gtag==='function')window.gtag('event',nome,parametros);
+    }
+    function numero(value){
+      if(value===null||value===undefined||String(value).trim()==='')return null;
+      const n=typeof value==='number'?value:Number(String(value).trim().replace(',','.'));
+      return Number.isFinite(n)?n:null;
+    }
+    function texto(value){return String(value??'').trim();}
+    function escapar(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function euros(value){return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(value);}
+    function urlGoogleMaps(bar){
+      const nome=texto(bar.nome)||'Bar no Porto';
+      const placeId=texto(bar.google_place_id);
+      if(placeId)return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(nome)+'&query_place_id='+encodeURIComponent(placeId);
+      const lat=numero(bar.latitude),lon=numero(bar.longitude);
+      if(lat!==null&&lon!==null)return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lat+','+lon);
+      const query=[nome,texto(bar.zona),'Porto'].filter(Boolean).join(', ');
+      return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query);
+    }
+    function normalizarBar(bar){
+      const preco=numero(bar.preco_fino),tamanho=numero(bar.tamanho_cl);
+      let porLitro=numero(bar.preco_litro);
+      if(preco!==null&&tamanho!==null&&tamanho>0)porLitro=preco/(tamanho/100);
+      const nome=texto(bar.nome),marca=texto(bar.marca_cerveja),zona=texto(bar.zona);
+      if(!nome||!marca||!zona||preco===null||preco<=0||tamanho===null||tamanho<=0||porLitro===null||porLitro<=0)return null;
+      return {...bar,_preco:preco,_tamanho:tamanho,_porLitro:porLitro,_nome:nome,_marca:marca,_zona:zona};
+    }
+    function ordenar(bars){return [...bars].sort((a,b)=>a._porLitro-b._porLitro||a._preco-b._preco||a._nome.localeCompare(b._nome,'pt-PT'));}
+    function criarCartao(bar,index){
+      const meta=[bar._marca,bar._tamanho+' cl'].join(' · ');
+      return `<article class="rank-card">
+        <div class="rank-number" aria-label="${index+1}.ª posição">${index+1}.º</div>
+        <div class="rank-content">
+          <div class="rank-topline"><div><h3 class="bar-name">${escapar(bar._nome)}</h3><p class="zone-name">${escapar(bar._zona)}</p></div><div class="price-per-litre">${euros(bar._porLitro)}<small>por litro</small></div></div>
+          <div class="bar-details"><span>${escapar(meta)}</span><span class="serving-price">${euros(bar._preco)} por fino</span></div>
+          <a class="maps-link" href="${escapar(urlGoogleMaps(bar))}" target="_blank" rel="noopener noreferrer" data-bar-id="${escapar(bar.bar_id??'')}">Ver no Google Maps ↗</a>
+        </div>
+      </article>`;
+    }
+    function mostrarRanking(bars,container,statusEl,label){
+      const top=ordenar(bars).slice(0,5);
+      if(!top.length){container.hidden=true;container.innerHTML='';statusEl.hidden=false;statusEl.className='status';statusEl.textContent='Ainda não existem bares nesta lista com preço, tamanho e marca registados.';return;}
+      container.innerHTML=top.map(criarCartao).join('');container.hidden=false;statusEl.hidden=true;
+      container.querySelectorAll('.maps-link').forEach(link=>link.addEventListener('click',()=>registarEventoAnalytics('ranking_google_maps_click',{ranking_type:label,bar_id:link.dataset.barId||'unknown'})));
+    }
+    function atualizarZona(){
+      const zona=seletorZona.value;
+      if(!zona){mostrarRanking([],rankingZona,estadoZona,'zona');return;}
+      mostrarRanking(baresElegiveis.filter(bar=>bar._zona===zona),rankingZona,estadoZona,'zona');
+      registarEventoAnalytics('ranking_zone_selected',{zone:zona});
+    }
+    async function carregarRankings(){
+      const inicio=performance.now();
+      try{
+        const response=await fetch(API_URL);
+        if(!response.ok)throw new Error('Erro HTTP '+response.status);
+        const data=await response.json();
+        if(!data.sucesso||!Array.isArray(data.bares))throw new Error(data.erro||'Resposta da API inválida.');
+        baresElegiveis=data.bares.map(normalizarBar).filter(Boolean);
+        mostrarRanking(baresElegiveis,rankingGeral,estadoGeral,'geral');
+        const zonas=[...new Set(data.bares.map(bar=>texto(bar.zona)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
+        seletorZona.innerHTML='';
+        if(zonas.length){zonas.forEach((zona,i)=>{const option=document.createElement('option');option.value=zona;option.textContent=zona;seletorZona.appendChild(option);});seletorZona.disabled=false;atualizarZona();}
+        else{seletorZona.innerHTML='<option value="">Sem zonas disponíveis</option>';seletorZona.disabled=true;mostrarRanking([],rankingZona,estadoZona,'zona');}
+        registarEventoAnalytics('rankings_loaded',{bars_received:data.bares.length,bars_ranked:baresElegiveis.length,load_time_ms:Math.round(performance.now()-inicio)});
+      }catch(error){
+        console.error('[Finos no Porto] Erro ao carregar rankings:',error);
+        estadoGeral.hidden=false;estadoGeral.className='status error';estadoGeral.textContent='Não foi possível carregar os preços. Tenta novamente dentro de momentos.';
+        estadoZona.hidden=false;estadoZona.className='status error';estadoZona.textContent='Não foi possível carregar as zonas.';
+        seletorZona.innerHTML='<option value="">Dados indisponíveis</option>';seletorZona.disabled=true;
+        registarEventoAnalytics('rankings_load_failed');
+      }
+    }
+    seletorZona.addEventListener('change',atualizarZona);
+    carregarRankings();
+  </script>
+</body>
+</html>
 
