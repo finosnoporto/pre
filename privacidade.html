@@ -60,6 +60,7 @@
 
     function loadAnalytics() {
       if (window.__finosAnalyticsConsent !== 'accepted' || window.__finosGaLoaded) return;
+      window['ga-disable-' + GA_ID] = false;
       window.__finosGaLoaded = true;
       window.dataLayer = window.dataLayer || [];
       window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
@@ -83,18 +84,31 @@
       });
     }
 
+    function pararAnalytics() {
+      // Melhor esforço imediato: bloquear chamadas futuras, retirar a etiqueta e limpar cookies acessíveis.
+      window['ga-disable-' + GA_ID] = true;
+      const tag = document.getElementById('finos-google-analytics');
+      if (tag) tag.remove();
+      apagarCookiesAnalytics();
+      // Substituir gtag impede os eventos personalizados do site de serem enfileirados novamente.
+      try { delete window.gtag; } catch (error) { window.gtag = undefined; }
+      window.dataLayer = [];
+    }
+
     function guardarEscolha(choice) {
+      const escolhaAnterior = window.__finosAnalyticsConsent;
       window.__finosAnalyticsConsent = choice;
       try { localStorage.setItem(CONSENT_KEY, choice); } catch (error) { /* A escolha mantém-se nesta página. */ }
       if (choice === 'accepted') {
         loadAnalytics();
       } else {
-        if (typeof window.gtag === 'function') {
-          window.gtag('consent', 'update', { analytics_storage: 'denied' });
-        }
-        apagarCookiesAnalytics();
+        pararAnalytics();
       }
       esconderAviso();
+      // Se o Analytics já tinha sido ativado, recarregar termina a página com o estado recusado persistido.
+      if (choice === 'rejected' && escolhaAnterior === 'accepted') {
+        window.location.reload();
+      }
     }
 
     function esconderAviso() {
@@ -106,7 +120,7 @@
       const banner = document.getElementById('consentBanner');
       if (banner) {
         banner.hidden = false;
-        const firstButton = banner.querySelector('[data-consent-accept]');
+        const firstButton = banner.querySelector('[data-consent-reject]');
         if (firstButton) firstButton.focus({ preventScroll: true });
       }
     }
@@ -139,19 +153,39 @@
   <nav class="navigation" aria-label="Navegação"><a class="back-link" href="index.html">← Voltar ao mapa de bares</a></nav>
   <main>
     <h2>Privacidade e cookies</h2>
-    <p>Queremos que possas utilizar o Finos no Porto com informação clara sobre os dados tratados quando visitas o site.</p>
+    <p>Esta página explica, em linguagem simples, que informações podem ser tratadas quando utilizas o Finos no Porto e como podes exercer os teus direitos.</p>
+
+    <h3>Quem gere o projeto</h3>
+    <p>O Finos no Porto é um projeto pessoal, não associado a uma empresa ou associação. O responsável pelo tratamento é a pessoa singular que gere o projeto. Para questões de privacidade ou pedidos relativos aos teus dados, contacta <a href="mailto:finosnoporto@gmail.com">finosnoporto@gmail.com</a>.</p>
+
     <h3>Estatísticas de utilização</h3>
-    <p>Com a tua autorização, usamos o Google Analytics 4 para compreender como o site é utilizado, por exemplo, quais as páginas mais visitadas e quais as funcionalidades mais usadas. O Analytics só é carregado depois de escolheres «Aceitar estatísticas». Se recusares, não carregamos essa ferramenta. A tua escolha fica guardada no armazenamento local do navegador (localStorage), para não voltarmos a perguntar em cada página; esta preferência não ativa o Analytics. Podes alterá-la a qualquer momento através do botão abaixo ou da ligação no menu do mapa.</p>
+    <p>Com o teu consentimento, usamos o Google Analytics 4 para compreender de forma estatística como o site é utilizado, por exemplo, quais as páginas e funcionalidades mais consultadas. A base para este tratamento é o consentimento, que podes retirar a qualquer momento através de «Gerir preferências». Se recusares, o Analytics não é carregado. Se retirares uma aceitação anterior, a preferência é guardada, a etiqueta é removida e a página é recarregada sem iniciar o Analytics.</p>
+    <p>A escolha é guardada no armazenamento local do navegador (localStorage) para não voltarmos a perguntar em cada página. Esta preferência apenas regista a tua escolha — não ativa o Analytics. Podes limpar os dados do navegador, mas, nesse caso, o aviso poderá voltar a aparecer.</p>
     <p><button class="manage-button" type="button" data-consent-manage>Gerir preferências de estatísticas</button></p>
-    <h3>Mapa, API e serviços externos</h3>
-    <p>Para apresentar os bares e os mapas, o site comunica com serviços externos, incluindo a API do projeto alojada no Google Apps Script/Google Sheets, a biblioteca Leaflet e os mapas OpenStreetMap. Quando o navegador faz pedidos a serviços externos, esses fornecedores podem receber dados técnicos necessários à comunicação, como o endereço IP e informações do navegador, de acordo com os respetivos serviços e políticas.</p>
+
+    <h3>Dados tratados para o funcionamento do site</h3>
+    <p>O site carrega os dados dos bares através da infraestrutura do projeto (Google Apps Script e Google Sheets) e utiliza Leaflet e mapas OpenStreetMap. Estes pedidos técnicos podem revelar aos respetivos fornecedores informações necessárias à comunicação, como o endereço IP, o tipo de navegador e dados do dispositivo. As ligações a serviços externos ficam sujeitas também às políticas desses fornecedores.</p>
+
     <h3>Localização do dispositivo</h3>
-    <p>A opção «Perto de mim» só utiliza a localização do dispositivo depois de a ativares e de concederes autorização ao navegador. A localização serve para centrar o mapa na tua posição. O site não envia as coordenadas GPS para a folha de dados do projeto nem as inclui nos eventos do Google Analytics.</p>
-    <h3>Informação enviada através dos formulários</h3>
-    <p>Quando sugeres um bar ou envias feedback sobre um preço, os dados que preenches são enviados para a infraestrutura Google Sheets/Apps Script usada pelo projeto para analisar as sugestões e manter a informação dos bares. Não te pedimos uma conta de utilizador para utilizar o mapa. Evita incluir dados pessoais desnecessários nos comentários.</p>
-    <h3>Responsável e contacto</h3>
-    <p>Podes contactar-nos para questões sobre privacidade ou para apresentar um pedido relativo aos teus dados através de <a href="mailto:finosnoporto@gmail.com">finosnoporto@gmail.com</a>. Antes do lançamento público, esta informação deve ser completada com a identificação formal da pessoa ou entidade responsável pelo tratamento e com os prazos de conservação aplicáveis.</p>
-    <p class="updated">Esta página deve ser revista sempre que forem alterados os serviços usados, os formulários ou as práticas de recolha de dados.</p>
+    <p>A funcionalidade «Perto de mim» só acede à localização quando a ativas e autorizas o navegador. É utilizada para centrar o mapa e calcular a proximidade no teu dispositivo. O site não envia as coordenadas GPS para a folha de dados do projeto nem as inclui nos eventos personalizados do Google Analytics.</p>
+
+    <h3>Sugestões e correções enviadas</h3>
+    <p>Se sugerires um bar ou enviares uma correção, os dados que preencheres são enviados para Google Apps Script/Google Sheets para analisar a sugestão, verificar a informação e manter o diretório atualizado. O mapa pode ser utilizado sem criar uma conta. Evita incluir nomes, contactos ou outros dados pessoais que não sejam necessários nos campos livres.</p>
+
+    <h3>Fundamentos do tratamento</h3>
+    <p>O Google Analytics só é utilizado com base no teu consentimento. A utilização das funcionalidades que pedes (como carregar o mapa ou enviar uma sugestão) envolve o tratamento técnico necessário para prestar essas funcionalidades. As sugestões e correções são também utilizadas para o interesse legítimo do projeto em manter um diretório de preços fiável e reduzir contribuições incorretas ou abusivas.</p>
+
+    <h3>Conservação</h3>
+    <p>A escolha de consentimento permanece no teu navegador até a alterares ou apagares os dados locais. Os dados enviados nos formulários devem ser conservados apenas durante o tempo necessário para validar a contribuição, manter o diretório fiável e tratar eventuais abusos; dados pessoais desnecessários incluídos nos comentários devem ser eliminados quando identificados. Os dados estatísticos do Google Analytics ficam sujeitos ao período de retenção configurado nas definições da propriedade GA4 e às políticas do Google. O responsável pelo projeto deve confirmar essa configuração antes do lançamento público.</p>
+
+    <h3>Os teus direitos</h3>
+    <p>Nos termos aplicáveis do RGPD, podes solicitar acesso aos dados pessoais que te digam respeito, a sua retificação ou apagamento, a limitação do tratamento ou opor-te ao tratamento quando aplicável. Quando o tratamento se baseia no consentimento, podes retirá-lo a qualquer momento; isso não afeta o tratamento feito antes da retirada. Para exercer os teus direitos, escreve para <a href="mailto:finosnoporto@gmail.com">finosnoporto@gmail.com</a>. Poderemos pedir informação estritamente necessária para confirmar a identidade antes de responder.</p>
+    <p>Também podes apresentar uma reclamação à Comissão Nacional de Proteção de Dados (CNPD): <a href="https://www.cnpd.pt/cidadaos/direitos/" target="_blank" rel="noopener noreferrer">informação sobre direitos e como exercê-los</a>.</p>
+
+    <h3>Serviços de terceiros</h3>
+    <p>O funcionamento do mapa e da API envolve serviços externos, nomeadamente Google Apps Script/Google Sheets, Google Analytics (apenas após consentimento), Leaflet e OpenStreetMap. Estes serviços têm as suas próprias políticas de privacidade e podem tratar dados técnicos nos pedidos que recebem.</p>
+
+    <p class="updated">Esta informação será revista sempre que forem alterados os serviços, os formulários, as finalidades ou os períodos de conservação.</p>
   </main>
   <footer>Finos no Porto — <a href="index.html">Voltar ao mapa de bares</a></footer>
 <section id="consentBanner" class="consent-banner" aria-label="Preferências de estatísticas" aria-describedby="consentDescription" hidden>
