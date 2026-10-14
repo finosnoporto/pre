@@ -95,6 +95,7 @@
 
     function loadAnalytics() {
       if (window.__finosAnalyticsConsent !== 'accepted' || window.__finosGaLoaded) return;
+      window['ga-disable-' + GA_ID] = false;
       window.__finosGaLoaded = true;
       window.dataLayer = window.dataLayer || [];
       window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
@@ -118,18 +119,31 @@
       });
     }
 
+    function pararAnalytics() {
+      // Melhor esforço imediato: bloquear chamadas futuras, retirar a etiqueta e limpar cookies acessíveis.
+      window['ga-disable-' + GA_ID] = true;
+      const tag = document.getElementById('finos-google-analytics');
+      if (tag) tag.remove();
+      apagarCookiesAnalytics();
+      // Substituir gtag impede os eventos personalizados do site de serem enfileirados novamente.
+      try { delete window.gtag; } catch (error) { window.gtag = undefined; }
+      window.dataLayer = [];
+    }
+
     function guardarEscolha(choice) {
+      const escolhaAnterior = window.__finosAnalyticsConsent;
       window.__finosAnalyticsConsent = choice;
       try { localStorage.setItem(CONSENT_KEY, choice); } catch (error) { /* A escolha mantém-se nesta página. */ }
       if (choice === 'accepted') {
         loadAnalytics();
       } else {
-        if (typeof window.gtag === 'function') {
-          window.gtag('consent', 'update', { analytics_storage: 'denied' });
-        }
-        apagarCookiesAnalytics();
+        pararAnalytics();
       }
       esconderAviso();
+      // Se o Analytics já tinha sido ativado, recarregar termina a página com o estado recusado persistido.
+      if (choice === 'rejected' && escolhaAnterior === 'accepted') {
+        window.location.reload();
+      }
     }
 
     function esconderAviso() {
@@ -141,7 +155,7 @@
       const banner = document.getElementById('consentBanner');
       if (banner) {
         banner.hidden = false;
-        const firstButton = banner.querySelector('[data-consent-accept]');
+        const firstButton = banner.querySelector('[data-consent-reject]');
         if (firstButton) firstButton.focus({ preventScroll: true });
       }
     }
