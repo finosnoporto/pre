@@ -5,14 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finos no Porto</title>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QRLRD1YYF1"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-QRLRD1YYF1');
-  </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin="">
@@ -366,7 +358,119 @@
     @media(prefers-reduced-motion:reduce){
       .filter-button,.submit-bar-button,.menu-toggle,.menu-backdrop,.side-menu{transition:none}
     }
+  
+    /* Consentimento opcional para estatísticas: discreto e adaptado a ecrãs pequenos. */
+    .consent-banner{
+      position:fixed;z-index:5000;left:50%;bottom:12px;transform:translateX(-50%);
+      width:min(600px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;
+      padding:14px 15px;background:#fff;border:1px solid #d8c9ac;border-top:3px solid #d8b15e;
+      border-radius:12px;box-shadow:0 5px 24px rgba(35,20,23,.22);color:#302326;
+      font-family:Arial,sans-serif;font-size:14px;line-height:1.45;
+    }
+    .consent-banner[hidden]{display:none}
+    .consent-title{font-size:15px;font-weight:700;margin:0 0 5px;color:#54101b}
+    .consent-copy{margin:0;color:#5d5354;font-size:13px}
+    .consent-copy a,.consent-inline-link{color:#7b1727;text-decoration:underline;text-underline-offset:2px}
+    .consent-actions{display:flex;gap:8px;margin-top:11px}
+    .consent-button{flex:1;min-height:39px;padding:8px 10px;border:1px solid #7b1727;border-radius:8px;
+      font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+    .consent-accept{background:#7b1727;color:#fff}
+    .consent-reject{background:#fff;color:#7b1727}
+    .consent-button:focus-visible,.consent-inline-link:focus-visible{outline:3px solid #d8b15e;outline-offset:2px}
+    .consent-menu-links{display:block;margin-top:7px;font-size:11px;line-height:1.5}
+    .consent-menu-links a,.consent-menu-links button{color:#7b1727;background:none;border:0;padding:0;font:inherit;font-size:inherit;text-decoration:underline;cursor:pointer}
+    @media(max-width:420px){
+      .consent-banner{bottom:8px;width:calc(100vw - 16px);padding:12px;border-radius:10px}
+      .consent-actions{gap:7px}
+      .consent-button{font-size:12px;padding:8px 6px}
+    }
+
   </style>
+<script>
+  (function () {
+    'use strict';
+    const CONSENT_KEY = 'finosnoporto_analytics_consent_v1';
+    const GA_ID = 'G-QRLRD1YYF1';
+    let savedChoice = null;
+    try { savedChoice = localStorage.getItem(CONSENT_KEY); } catch (error) { /* Storage pode estar indisponível. */ }
+    window.__finosAnalyticsConsent = savedChoice === 'accepted' ? 'accepted' : (savedChoice === 'rejected' ? 'rejected' : 'unset');
+    window.__finosGaLoaded = false;
+
+    function loadAnalytics() {
+      if (window.__finosAnalyticsConsent !== 'accepted' || window.__finosGaLoaded) return;
+      window.__finosGaLoaded = true;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', GA_ID);
+      const tag = document.createElement('script');
+      tag.async = true;
+      tag.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_ID);
+      tag.id = 'finos-google-analytics';
+      document.head.appendChild(tag);
+    }
+
+    function apagarCookiesAnalytics() {
+      const nomes = document.cookie.split(';').map(function (item) { return item.trim().split('=')[0]; })
+        .filter(function (name) { return /^_ga($|_)/.test(name) || /^_gid$/.test(name) || /^_gat($|_)/.test(name); });
+      const host = window.location.hostname;
+      nomes.forEach(function (name) {
+        document.cookie = name + '=; Max-Age=0; path=/; SameSite=Lax';
+        if (host) document.cookie = name + '=; Max-Age=0; path=/; domain=' + host + '; SameSite=Lax';
+        if (host && host.indexOf('.') !== -1) document.cookie = name + '=; Max-Age=0; path=/; domain=.' + host + '; SameSite=Lax';
+      });
+    }
+
+    function guardarEscolha(choice) {
+      window.__finosAnalyticsConsent = choice;
+      try { localStorage.setItem(CONSENT_KEY, choice); } catch (error) { /* A escolha mantém-se nesta página. */ }
+      if (choice === 'accepted') {
+        loadAnalytics();
+      } else {
+        if (typeof window.gtag === 'function') {
+          window.gtag('consent', 'update', { analytics_storage: 'denied' });
+        }
+        apagarCookiesAnalytics();
+      }
+      esconderAviso();
+    }
+
+    function esconderAviso() {
+      const banner = document.getElementById('consentBanner');
+      if (banner) banner.hidden = true;
+    }
+
+    function mostrarAviso() {
+      const banner = document.getElementById('consentBanner');
+      if (banner) {
+        banner.hidden = false;
+        const firstButton = banner.querySelector('[data-consent-accept]');
+        if (firstButton) firstButton.focus({ preventScroll: true });
+      }
+    }
+
+    window.finosGerirPreferencias = mostrarAviso;
+    if (window.__finosAnalyticsConsent === 'accepted') loadAnalytics();
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const banner = document.getElementById('consentBanner');
+      if (!banner) return;
+      banner.hidden = window.__finosAnalyticsConsent !== 'unset';
+      document.querySelectorAll('[data-consent-accept]').forEach(function (button) {
+        button.addEventListener('click', function () { guardarEscolha('accepted'); });
+      });
+      document.querySelectorAll('[data-consent-reject]').forEach(function (button) {
+        button.addEventListener('click', function () { guardarEscolha('rejected'); });
+      });
+      document.querySelectorAll('[data-consent-manage]').forEach(function (button) {
+        button.addEventListener('click', function (event) {
+          event.preventDefault();
+          mostrarAviso();
+        });
+      });
+    });
+  })();
+</script>
 </head>
 <body>
   <header>
@@ -419,7 +523,7 @@
       <svg class="menu-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path>
       </svg>
-      <p>Em caso de erros, sugestões ou parcerias, contactar <a href="mailto:finosnoporto@gmail.com">finosnoporto@gmail.com</a>.</p>
+      <p>Em caso de erros, sugestões ou parcerias, contactar <a href="mailto:finosnoporto@gmail.com">finosnoporto@gmail.com</a>.<span class="consent-menu-links"><a href="privacidade.html">Privacidade e cookies</a> · <button type="button" data-consent-manage>Gerir preferências</button></span></p>
     </footer>
   </aside>
 
@@ -515,9 +619,9 @@
     crossorigin=""></script>
 
   <script>
-    // Google Analytics 4 está inicializado no <head>; esta função regista eventos personalizados.
+    // Os eventos só são enviados depois de o visitante aceitar as estatísticas.
     function registarEventoAnalytics(nomeEvento, parametros={}){
-      if(typeof window.gtag!=='function')return;
+      if(window.__finosAnalyticsConsent!=='accepted'||typeof window.gtag!=='function')return;
       window.gtag('event',nomeEvento,parametros);
     }
 
@@ -667,7 +771,7 @@
         map.setView(coordenadasLocalizacaoUtilizador,Math.max(map.getZoom(),16),{animate:true});
         terminarPedidoLocalizacao();
         mostrarMensagemLocalizacao('Localização encontrada.',false,3000);
-        registarEventoAnalytics('user_location_success',{accuracy_m:Math.round(position.coords.accuracy||0)});
+        registarEventoAnalytics('user_location_success');
       },error=>{
         terminarPedidoLocalizacao();
         let mensagem='Não foi possível obter a localização. Tenta novamente.';
@@ -1518,5 +1622,13 @@
 
     carregarBares();
   </script>
+<section id="consentBanner" class="consent-banner" aria-label="Preferências de estatísticas" aria-describedby="consentDescription" hidden>
+  <p class="consent-title">Ajudas-nos a melhorar o Finos no Porto?</p>
+  <p class="consent-copy" id="consentDescription">Podemos usar o Google Analytics para perceber como o site é utilizado. A escolha é tua e podes alterá-la mais tarde em <a href="privacidade.html">Privacidade e cookies</a>.</p>
+  <div class="consent-actions">
+    <button class="consent-button consent-reject" type="button" data-consent-reject>Recusar estatísticas</button>
+    <button class="consent-button consent-accept" type="button" data-consent-accept>Aceitar estatísticas</button>
+  </div>
+</section>
 </body>
 </html>
