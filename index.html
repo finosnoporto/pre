@@ -405,13 +405,13 @@
         <span class="menu-item-label">Rankings dos finos mais baratos</span>
         <svg class="menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
       </a>
-      <button class="menu-item menu-item-disabled" type="button" disabled aria-disabled="true" title="Disponível brevemente">
+      <a class="menu-item" href="sobrenos.html" style="text-decoration:none">
         <svg class="menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7h.01"></path>
         </svg>
-        <span class="menu-item-label">Sobre nós<span class="menu-coming-soon">Em breve</span></span>
+        <span class="menu-item-label">Sobre nós</span>
         <svg class="menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
-      </button>
+      </a>
     </nav>
 
     <div class="side-menu-divider" aria-hidden="true"></div>
@@ -1509,6 +1509,12 @@
       if(tinhaFiltros)registarEventoAnalytics('filters_cleared');
       mostrarBares();
     });
+
+    // Permite abrir diretamente o formulário de novo bar através de index.html#mostrarSubmissao.
+    if(window.location.hash==='#mostrarSubmissao'){
+      mostrarSubmissaoElement.click();
+      setTimeout(()=>submitBarFormElement.scrollIntoView({behavior:'smooth',block:'center'}),80);
+    }
 
     carregarBares();
   </script>
