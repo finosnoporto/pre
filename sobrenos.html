@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#7b1727">
+  <meta name="description" content="Conhece o Finos no Porto e ajuda-nos a mapear os finos da cidade, confirmar preços e descobrir novos bares.">
+  <link rel="icon" type="image/png" href="logo_site.png">
+  <title>Sobre nós | Finos no Porto</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QRLRD1YYF1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QRLRD1YYF1');
+  </script>
+  <style>
+    :root{--brand-red:#7b1727;--brand-red-dark:#54101b;--brand-gold:#d8b15e;--brand-gold-dark:#c39a43;--brand-cream:#faf5e9;--brand-cream-deep:#f3ead7;--brand-text:#302326;--muted:#75696b;--line:#e4d7c1}
+    *{box-sizing:border-box}
+    html{min-height:100%;background:#f7f4ee;scroll-behavior:smooth}
+    body{margin:0;font-family:Arial,sans-serif;color:var(--brand-text);background:#f7f4ee;line-height:1.55}
+    a{color:inherit}
+    .site-header{padding:23px 16px 21px;background:linear-gradient(135deg,var(--brand-red),var(--brand-red-dark));color:#fff;text-align:center;border-bottom:3px solid var(--brand-gold)}
+    .site-header h1{margin:0;font-size:clamp(23px,5vw,31px);line-height:1.2}
+    .site-header p{margin:7px 0 0;color:#f8ead1;font-size:14px}
+    .top-nav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:var(--brand-cream);border-bottom:1px solid var(--line)}
+    .top-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 13px;border:1px solid var(--brand-red);border-radius:9px;color:var(--brand-red);font-size:14px;font-weight:700;text-decoration:none}
+    .top-nav a[aria-current="page"]{background:var(--brand-red);color:#fff}
+    main{width:min(100% - 28px,900px);margin:22px auto 36px}
+    .hero{position:relative;overflow:hidden;padding:clamp(24px,6vw,48px);border-radius:18px;background:linear-gradient(135deg,var(--brand-red),var(--brand-red-dark));color:#fff;border-bottom:4px solid var(--brand-gold);box-shadow:0 8px 24px rgba(84,16,27,.12)}
+    .hero-mark{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;margin-bottom:15px;border:1px solid rgba(216,177,94,.65);border-radius:14px;color:var(--brand-gold);font-size:27px}
+    .eyebrow{margin:0 0 8px;color:var(--brand-gold);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+    .hero h2{max-width:700px;margin:0;font-size:clamp(27px,6vw,43px);line-height:1.12;letter-spacing:-.5px}
+    .hero p{max-width:650px;margin:16px 0 0;color:#f8ead1;font-size:clamp(15px,2.4vw,17px)}
+    .section{margin:25px 0}
+    .section h2{margin:0 0 9px;color:var(--brand-red-dark);font-size:clamp(21px,4.5vw,27px);line-height:1.25}
+    .section>p{margin:0 0 11px;color:#5f5557;font-size:15px}
+    .values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:16px}
+    .value-card{height:100%;padding:19px;border:1px solid var(--line);border-radius:13px;background:#fffdf8}
+    .value-icon{display:flex;align-items:center;justify-content:center;width:42px;height:42px;margin-bottom:12px;border-radius:12px;background:var(--brand-cream-deep);color:var(--brand-red);font-size:21px}
+    .value-card h3{margin:0 0 7px;color:var(--brand-red-dark);font-size:17px}
+    .value-card p{margin:0;color:#65595b;font-size:14px}
+    .collab{padding:clamp(20px,4vw,30px);border:1px solid var(--line);border-radius:15px;background:var(--brand-cream)}
+    .collab-list{display:grid;gap:14px;margin-top:18px}
+    .collab-item{display:flex;align-items:flex-start;gap:12px}
+    .collab-item .number{display:flex;flex:0 0 31px;align-items:center;justify-content:center;width:31px;height:31px;border-radius:9px;background:var(--brand-red);color:#fff;font-size:14px;font-weight:700}
+    .collab-item h3{margin:0 0 3px;font-size:15px;color:var(--brand-red-dark)}
+    .collab-item p{margin:0;color:#65595b;font-size:14px}
+    .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+    .button{display:inline-flex;align-items:center;justify-content:center;min-height:45px;padding:11px 16px;border:1px solid var(--brand-red);border-radius:10px;background:var(--brand-red);color:#fff;text-align:center;text-decoration:none;font-size:14px;font-weight:700}
+    .button:hover{background:var(--brand-red-dark)}
+    .button.secondary{background:transparent;color:var(--brand-red)}
+    .button.secondary:hover{background:var(--brand-cream-deep)}
+    .closing{margin-top:24px;padding:23px 18px;text-align:center;border-top:1px solid var(--line)}
+    .closing blockquote{margin:0 auto 12px;max-width:690px;color:var(--brand-red-dark);font-size:clamp(20px,4vw,27px);font-weight:700;line-height:1.3}
+    .closing p{margin:0;color:#65595b;font-size:14px}
+    .closing a{color:var(--brand-red);font-weight:700;text-decoration:none;overflow-wrap:anywhere}
+    footer{padding:18px 14px 22px;text-align:center;color:#776b6d;font-size:12px}
+    footer a{color:var(--brand-red);font-weight:700;text-decoration:none}
+    @media(max-width:560px){main{width:min(100% - 22px,900px);margin-top:13px}.hero{border-radius:14px}.values{grid-template-columns:1fr;gap:10px}.value-card{padding:16px}.section{margin:22px 0}.cta-row{display:grid;grid-template-columns:1fr}.button{width:100%}.top-nav{gap:6px}.top-nav a{flex:1;padding:8px 9px;font-size:13px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <h1>Finos no Porto</h1>
+    <p>Encontra e compara o preço dos finos no Porto</p>
+  </header>
+  <nav class="top-nav" aria-label="Navegação principal">
+    <a href="index.html">Mapa de bares</a>
+    <a href="rankings.html">Rankings</a>
+    <a href="sobrenos.html" aria-current="page">Sobre nós</a>
+  </nav>
+
+  <main>
+    <section class="hero" aria-labelledby="titulo-principal">
+      <div class="hero-mark" aria-hidden="true">🍺</div>
+      <p class="eyebrow">Um brinde à Invicta</p>
+      <h2 id="titulo-principal">Um fino sabe ainda melhor quando sabemos onde o encontrar.</h2>
+      <p>Queremos mapear os finos do Porto, valorizar a cultura dos nossos bares e ajudar toda a gente a encontrar o próximo fino — a um preço que sabe ainda melhor.</p>
+    </section>
+
+    <section class="section" aria-labelledby="missao-titulo">
+      <h2 id="missao-titulo">O Porto tem muitos sítios para beber um fino. Vamos encontrá-los?</h2>
+      <p>O Finos no Porto nasceu de uma ideia simples: criar um mapa que ajude qualquer pessoa a descobrir onde beber um fino na Invicta, comparar preços e conhecer novos bares pelo caminho.</p>
+      <p>Queremos dar visibilidade aos espaços que fazem parte do dia a dia da cidade e contribuir para manter viva uma das tradições mais apreciadas da nossa cultura. Porque há poucas coisas tão simples e tão boas como parar para beber um fino com os amigos.</p>
+      <div class="values">
+        <article class="value-card">
+          <div class="value-icon" aria-hidden="true">⌖</div>
+          <h3>Descobrir o Porto</h3>
+          <p>Ajudar a encontrar bares, comparar preços e descobrir novos sítios para o próximo fino.</p>
+        </article>
+        <article class="value-card">
+          <div class="value-icon" aria-hidden="true">♡</div>
+          <h3>Construir em comunidade</h3>
+          <p>Contar com quem conhece os bares, confirma preços e partilha locais que ainda não estão no mapa.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section collab" aria-labelledby="colaborar-titulo">
+      <h2 id="colaborar-titulo">Este projeto também é teu</h2>
+      <p>Não conhecemos todos os bares, nem conseguimos confirmar todos os preços sozinhos. Cada contributo ajuda a tornar o mapa mais completo, útil e fiável para todos.</p>
+      <div class="collab-list">
+        <div class="collab-item"><span class="number">1</span><div><h3>Conheces um bar que ainda não está no mapa?</h3><p>Sugere-o para nos ajudares a descobrir novos sítios onde beber um fino.</p></div></div>
+        <div class="collab-item"><span class="number">2</span><div><h3>O preço indicado já mudou?</h3><p>Ajuda-nos a corrigir a informação para que o mapa continue a ser útil.</p></div></div>
+        <div class="collab-item"><span class="number">3</span><div><h3>Partilha o projeto</h3><p>Envia o Finos no Porto aos teus amigos. Quanto mais pessoas participarem, melhor será o mapa.</p></div></div>
+      </div>
+      <div class="cta-row">
+        <a class="button" href="index.html#mostrarSubmissao">＋ Adicionar um bar</a>
+        <a class="button secondary" href="index.html">Explorar o mapa e corrigir um preço</a>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="ambito-titulo">
+      <h2 id="ambito-titulo">Começamos pelo Porto. Crescemos contigo.</h2>
+      <p>Nesta primeira fase, estamos focados no concelho do Porto. Queremos construir uma boa base de dados da cidade antes de alargar o projeto a outras zonas. As sugestões de bares de fora do concelho são bem-vindas e poderão ajudar a orientar futuras expansões.</p>
+    </section>
+
+    <section class="closing" aria-label="Contacto">
+      <blockquote>Conheces o Porto. Conheces os finos. Ajuda-nos a pô-los no mapa.</blockquote>
+      <p>Tens uma sugestão, encontraste algum erro ou queres falar connosco?<br>Escreve-nos para <a href="mailto:finosnoporto@gmail.com">finosnoporto@gmail.com</a>.</p>
+    </section>
+  </main>
+  <footer>Finos no Porto — um brinde à Invicta. · <a href="index.html">Voltar ao mapa</a></footer>
+</body>
+</html>
