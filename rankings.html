@@ -129,7 +129,8 @@
       let porLitro=numero(bar.preco_litro);
       if(preco!==null&&tamanho!==null&&tamanho>0)porLitro=preco/(tamanho/100);
       const nome=texto(bar.nome),marca=texto(bar.marca_cerveja),zona=texto(bar.zona);
-      if(!nome||!marca||!zona||preco===null||preco<=0||tamanho===null||tamanho<=0||porLitro===null||porLitro<=0)return null;
+      // Nos rankings entram apenas finos de 20 cl ou 25 cl; exclui, por exemplo, registos de 35 cl.
+      if(![20,25].includes(tamanho)||!nome||!marca||!zona||preco===null||preco<=0||porLitro===null||porLitro<=0)return null;
       return {...bar,_preco:preco,_tamanho:tamanho,_porLitro:porLitro,_nome:nome,_marca:marca,_zona:zona};
     }
     function ordenar(bars){return [...bars].sort((a,b)=>a._porLitro-b._porLitro||a._preco-b._preco||a._nome.localeCompare(b._nome,'pt-PT'));}
@@ -183,4 +184,3 @@
   </script>
 </body>
 </html>
-
