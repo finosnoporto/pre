@@ -583,7 +583,7 @@
 
   <form id="submitBarForm" class="submit-bar-form">
     <div class="form-title">Adicionar um bar</div>
-    <div class="form-help">A submissão será verificada antes de aparecer no mapa.</div>
+    <div class="form-help">A submissão será verificada antes de aparecer no mapa. O preço máximo aceite é 10 €.</div>
 
     <div class="submit-group">
       <label for="novoNomeBar">Nome do bar</label>
@@ -597,7 +597,7 @@
 
     <div class="submit-group">
       <label for="novoPreco">Preço do fino (€)</label>
-      <input id="novoPreco" type="number" min="0.01" step="0.01" placeholder="Ex.: 1,50" required>
+      <input id="novoPreco" type="number" min="0.01" max="10" step="0.01" placeholder="Ex.: 1,50" required>
     </div>
 
     <div class="submit-group">
@@ -1077,6 +1077,13 @@
         const tamanho=Number(tamanhoSelect.value);
 
         if(!Number.isFinite(valor)||valor<=0){
+          mostrarMensagem('Indica um preço superior a 0 €.');
+          input.focus();
+          return;
+        }
+
+        if(valor>10){
+          mostrarMensagem('O preço máximo permitido é 10 €.');
           input.focus();
           return;
         }
@@ -1158,7 +1165,7 @@
             </div>
 
             <div class="feedback-form">
-              <input class="feedback-input" type="number" min="0.01" step="0.01" placeholder="${temPreco?'Novo preço':'Preço do fino (€)'}">
+              <input class="feedback-input" type="number" min="0.01" max="10" step="0.01" placeholder="${temPreco?'Novo preço':'Preço do fino (€)'}">
               <select class="feedback-select" aria-label="Tamanho do fino">
                 <option value="">Tamanho</option>
                 <option value="20" ${tamanho===20?'selected':''}>20 cl</option>
@@ -1396,6 +1403,12 @@
 
       if(!nome||!marca||!zona||!Number.isFinite(preco)||preco<=0||![20,25,35].includes(tamanho)){
         submitMessageElement.textContent='Preenche todos os campos corretamente.';
+        return;
+      }
+
+      if(preco>10){
+        submitMessageElement.textContent='O preço máximo permitido é 10 €.';
+        novoPrecoElement.focus();
         return;
       }
 
