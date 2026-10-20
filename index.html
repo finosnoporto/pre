@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    crossorigin="">
   <style>
     :root{
       --brand-red:#7b1727;
@@ -254,6 +256,23 @@
     .feedback-send:disabled{opacity:.6;cursor:not-allowed}
     .feedback-message{display:none;margin-top:7px;font-size:12px;color:#555;font-weight:600}
     .feedback-message.visible{display:block}
+    /* Agrupamento de bares: mantém a paleta bordô/dourado e reduz a sobreposição. */
+    .fino-cluster-icon{
+      display:flex;align-items:center;justify-content:center;
+      border:0;background:transparent;
+    }
+    .fino-cluster-count{
+      display:flex;align-items:center;justify-content:center;
+      width:100%;height:100%;box-sizing:border-box;
+      border:3px solid var(--brand-gold);border-radius:50%;
+      background:var(--brand-red);color:#fff;
+      box-shadow:0 2px 7px rgba(48,35,38,.28);
+      font-size:14px;font-weight:800;line-height:1;
+    }
+    .fino-cluster-icon:focus-visible .fino-cluster-count{
+      outline:3px solid var(--brand-gold);outline-offset:3px;
+    }
+
     .leaflet-popup-content-wrapper{border-radius:12px}
     .leaflet-popup-content{margin:10px 11px;max-width:280px;width:max-content!important}
     /* Cruz simples, de tamanho intermédio e sem fundo colorido. */
@@ -631,6 +650,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
     // Os eventos só são enviados depois de o visitante aceitar as estatísticas.
@@ -678,7 +698,25 @@
 
 
     let todosOsBares=[];
-    let markersLayer=L.layerGroup().addTo(map);
+    // Agrupa marcadores próximos para evitar sobreposição, sobretudo na Baixa.
+    // O fallback mantém o mapa utilizável caso a biblioteca de clustering não carregue.
+    const markersLayer=L.markerClusterGroup
+      ? L.markerClusterGroup({
+          maxClusterRadius:60,
+          showCoverageOnHover:false,
+          zoomToBoundsOnClick:true,
+          spiderfyOnMaxZoom:true,
+          iconCreateFunction:function(cluster){
+            const count=cluster.getChildCount();
+            const size=count<10?44:(count<100?48:52);
+            return L.divIcon({
+              html:`<span class="fino-cluster-count">${count}</span>`,
+              className:'fino-cluster-icon',
+              iconSize:[size,size]
+            });
+          }
+        }).addTo(map)
+      : L.layerGroup().addTo(map);
     let markersByBarId=new Map();
     let marcadorUtilizador=null;
     let coordenadasLocalizacaoUtilizador=null;
@@ -1272,8 +1310,14 @@
 
       const marker=markersByBarId.get(chaveBar(bar));
       if(marker){
-        map.flyTo(marker.getLatLng(),Math.max(map.getZoom(),16),{duration:0.45});
-        marker.openPopup();
+        if(typeof markersLayer.zoomToShowLayer==='function'){
+          // Garante que o marcador sai do cluster antes de abrir o popup da pesquisa.
+          markersLayer.zoomToShowLayer(marker,()=>marker.openPopup());
+        }else{
+          // Mantém o comportamento anterior se a biblioteca de clustering não carregar.
+          map.flyTo(marker.getLatLng(),Math.max(map.getZoom(),16),{duration:0.45});
+          marker.openPopup();
+        }
         return;
       }
 
