@@ -640,6 +640,10 @@
     }
 
     const API_URL='https://script.google.com/macros/s/AKfycbxP-5Ibk9MRKdGRNYnXNwdgPwOzi1XUlR4ccm7CGtxHudJsKzRznWniCgN6Ugx-C-4ZiQ/exec';
+    // Cache partilhada entre o mapa e os rankings durante a sessão deste separador.
+    const BARES_CACHE_KEY='finosnoporto_bares_cache_v1';
+    const BARES_CACHE_TTL_MS=60*60*1000;
+    let pedidoCarregamentoBares=null;
     const map=L.map('map').setView([41.1579,-8.6291],13);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
@@ -1043,6 +1047,8 @@
           registarEventoAnalytics('price_confirmed',{bar_id:String(bar.bar_id),tamanho_cl:Number(bar.tamanho_cl)});
 
           bar.atualizado_em=new Date().toString();
+          const cacheAtual=lerCacheBares();
+          guardarCacheBares(todosOsBares,cacheAtual?cacheAtual.guardadoEm:Date.now());
           popupElement.querySelector('.popup-updated').textContent='Atualizado hoje';
 
           fecharPopupAutomaticamente();
@@ -1279,13 +1285,18 @@
     }
 
     function preencherZonas(){
+      const zonaAnterior=zonaElement.value;
+      const novaZonaAnterior=novaZonaElement.value;
       const zonas=[...new Set(
         todosOsBares
           .map(bar=>String(bar.zona||'').trim())
           .filter(Boolean)
       )].sort((a,b)=>a.localeCompare(b,'pt'));
 
+      // Limpa as opções antes de reconstruir a lista, evitando duplicados
+      // quando os dados são atualizados após a expiração da cache.
       zonaElement.innerHTML='<option value="">Todas as zonas</option>';
+      novaZonaElement.innerHTML='<option value="">Selecionar zona</option>';
 
       zonas.forEach(zona=>{
         const option=document.createElement('option');
@@ -1298,6 +1309,9 @@
         submitOption.textContent=zona;
         novaZonaElement.appendChild(submitOption);
       });
+
+      if(zonas.includes(zonaAnterior))zonaElement.value=zonaAnterior;
+      if(zonas.includes(novaZonaAnterior))novaZonaElement.value=novaZonaAnterior;
     }
 
     function obterBaresFiltrados(){
@@ -1321,7 +1335,7 @@
       });
     }
 
-    function mostrarBares(){
+    function mostrarBares(ajustarVista=true){
       markersLayer.clearLayers();
       markersByBarId=new Map();
 
@@ -1369,13 +1383,13 @@
         // não deixar que o fim do carregamento volte a centrar o mapa no Porto inteiro.
         map.setView(coordenadasLocalizacaoUtilizador,Math.max(map.getZoom(),16));
         preservarLocalizacaoNoProximoRender=false;
-      }else if(markers.length>0){
+      }else if(markers.length>0&&ajustarVista){
         const group=L.featureGroup(markers);
         map.fitBounds(group.getBounds(),{
           padding:[40,40],
           maxZoom:15
         });
-      }else{
+      }else if(markers.length===0&&ajustarVista){
         map.setView([41.1579,-8.6291],13);
       }
 
@@ -1464,81 +1478,170 @@
       submitBarFormElement.reset();
     }
 
-    async function carregarBares(){
-      // performance.now() mede o tempo desde o início da navegação da página.
-      let inicioPedidoApi=null;
-      let tempoApiMs=null;
-      let tempoMapaMs=null;
-      let numeroBaresRecebidos=0;
-
+    function lerCacheBares(){
       try{
-        statusElement.classList.remove('error','hidden');
-        statusElement.textContent='A carregar os bares...';
-
-        inicioPedidoApi=performance.now();
-        const response=await fetch(API_URL);
-
-        if(!response.ok){
-          throw new Error(`Erro HTTP ${response.status}`);
-        }
-
-        const data=await response.json();
-        tempoApiMs=performance.now()-inicioPedidoApi;
-
-        if(!data.sucesso){
-          throw new Error(data.erro||'A API devolveu um erro.');
-        }
-
-        if(!Array.isArray(data.bares)){
-          throw new Error('A resposta da API não contém uma lista de bares.');
-        }
-
-        todosOsBares=data.bares;
-        numeroBaresRecebidos=todosOsBares.length;
-
-        const inicioRenderizacaoMapa=performance.now();
-        preencherZonas();
-        mostrarBares();
-        carregamentoInicialConcluido=true;
-        tempoMapaMs=performance.now()-inicioRenderizacaoMapa;
-
-        // O total é contado desde o início da navegação até os bares estarem
-        // recebidos, processados e adicionados ao mapa.
-        const metricasCarregamento={
-          tempo_total_ms:Math.round(performance.now()),
-          tempo_api_ms:Math.round(tempoApiMs),
-          tempo_mapa_ms:Math.round(tempoMapaMs),
-          bares_recebidos:numeroBaresRecebidos
-        };
-
-        console.info('[Finos no Porto] Medição do carregamento inicial dos bares:',metricasCarregamento);
-        registarEventoAnalytics('bars_initial_load_complete',{
-          load_time_ms:metricasCarregamento.tempo_total_ms,
-          api_time_ms:metricasCarregamento.tempo_api_ms,
-          map_render_time_ms:metricasCarregamento.tempo_mapa_ms,
-          bars_received_count:numeroBaresRecebidos
-        });
-
-        console.log('Dados recebidos da API:',data);
+        const texto=sessionStorage.getItem(BARES_CACHE_KEY);
+        if(!texto)return null;
+        const cache=JSON.parse(texto);
+        if(!cache||!Array.isArray(cache.bares)||!Number.isFinite(cache.guardadoEm))return null;
+        return cache;
       }catch(error){
-        const tempoTotalFalhaMs=Math.round(performance.now());
-        if(inicioPedidoApi!==null&&tempoApiMs===null){
-          tempoApiMs=performance.now()-inicioPedidoApi;
-        }
-
-        console.error(`[Finos no Porto] Falha no carregamento inicial após ${tempoTotalFalhaMs} ms.`,error);
-        const parametrosFalha={load_time_ms:tempoTotalFalhaMs};
-        if(tempoApiMs!==null){
-          parametrosFalha.api_time_ms=Math.round(tempoApiMs);
-        }
-        registarEventoAnalytics('bars_initial_load_failed',parametrosFalha);
-
-        statusElement.classList.remove('hidden');
-        statusElement.classList.add('error');
-        statusElement.textContent='Não foi possível carregar os bares. Verifica a ligação à API.';
+        // O armazenamento pode estar indisponível; nesse caso, o site continua a funcionar sem cache.
+        return null;
       }
     }
 
+    function guardarCacheBares(bares,guardadoEm=Date.now()){
+      try{
+        sessionStorage.setItem(BARES_CACHE_KEY,JSON.stringify({guardadoEm,bares}));
+      }catch(error){
+        // Se a cache não puder ser guardada, os dados continuam disponíveis nesta página.
+      }
+    }
+
+    function cacheBaresExpirada(cache){
+      return !cache||Date.now()-cache.guardadoEm>=BARES_CACHE_TTL_MS;
+    }
+
+    function apresentarBares(bares,{ajustarVista=true}={}){
+      todosOsBares=bares;
+      preencherZonas();
+      mostrarBares(ajustarVista);
+      carregamentoInicialConcluido=true;
+    }
+
+    async function carregarBares({silencioso=false}={}){
+      if(pedidoCarregamentoBares)return pedidoCarregamentoBares;
+
+      const pedido=(async()=>{
+        let inicioPedidoApi=null;
+        let tempoApiMs=null;
+        let tempoMapaMs=null;
+        let numeroBaresRecebidos=0;
+        const primeiraCarga=!carregamentoInicialConcluido;
+
+        try{
+          if(primeiraCarga&&!silencioso){
+            statusElement.classList.remove('error','hidden');
+            statusElement.textContent='A carregar os bares...';
+          }
+
+          inicioPedidoApi=performance.now();
+          const response=await fetch(API_URL);
+
+          if(!response.ok){
+            throw new Error(`Erro HTTP ${response.status}`);
+          }
+
+          const data=await response.json();
+          tempoApiMs=performance.now()-inicioPedidoApi;
+
+          if(!data.sucesso){
+            throw new Error(data.erro||'A API devolveu um erro.');
+          }
+
+          if(!Array.isArray(data.bares)){
+            throw new Error('A resposta da API não contém uma lista de bares.');
+          }
+
+          numeroBaresRecebidos=data.bares.length;
+          guardarCacheBares(data.bares);
+
+          if(primeiraCarga){
+            const inicioRenderizacaoMapa=performance.now();
+            apresentarBares(data.bares,{ajustarVista:true});
+            tempoMapaMs=performance.now()-inicioRenderizacaoMapa;
+
+            // O total é contado desde o início da navegação até os bares estarem
+            // recebidos, processados e adicionados ao mapa.
+            const metricasCarregamento={
+              tempo_total_ms:Math.round(performance.now()),
+              tempo_api_ms:Math.round(tempoApiMs),
+              tempo_mapa_ms:Math.round(tempoMapaMs),
+              bares_recebidos:numeroBaresRecebidos
+            };
+
+            console.info('[Finos no Porto] Medição do carregamento inicial dos bares:',metricasCarregamento);
+            registarEventoAnalytics('bars_initial_load_complete',{
+              load_time_ms:metricasCarregamento.tempo_total_ms,
+              api_time_ms:metricasCarregamento.tempo_api_ms,
+              map_render_time_ms:metricasCarregamento.tempo_mapa_ms,
+              bars_received_count:numeroBaresRecebidos
+            });
+          }else{
+            // Atualizar os marcadores sem recentrar o mapa nem apagar os filtros atuais.
+            const inicioRenderizacaoMapa=performance.now();
+            apresentarBares(data.bares,{ajustarVista:false});
+            tempoMapaMs=performance.now()-inicioRenderizacaoMapa;
+            console.info('[Finos no Porto] Dados dos bares atualizados em segundo plano:',{
+              api_time_ms:Math.round(tempoApiMs),
+              map_render_time_ms:Math.round(tempoMapaMs),
+              bars_received_count:numeroBaresRecebidos
+            });
+          }
+
+          console.log('Dados recebidos da API:',data);
+        }catch(error){
+          if(!carregamentoInicialConcluido){
+            const tempoTotalFalhaMs=Math.round(performance.now());
+            if(inicioPedidoApi!==null&&tempoApiMs===null){
+              tempoApiMs=performance.now()-inicioPedidoApi;
+            }
+
+            console.error(`[Finos no Porto] Falha no carregamento inicial após ${tempoTotalFalhaMs} ms.`,error);
+            const parametrosFalha={load_time_ms:tempoTotalFalhaMs};
+            if(tempoApiMs!==null){
+              parametrosFalha.api_time_ms=Math.round(tempoApiMs);
+            }
+            registarEventoAnalytics('bars_initial_load_failed',parametrosFalha);
+
+            statusElement.classList.remove('hidden');
+            statusElement.classList.add('error');
+            statusElement.textContent='Não foi possível carregar os bares. Verifica a ligação à API.';
+          }else{
+            // Se já existem dados em cache, mantém o mapa utilizável quando a API falha.
+            console.warn('[Finos no Porto] Não foi possível atualizar os bares; mantêm-se os dados guardados.',error);
+          }
+        }
+      })();
+
+      pedidoCarregamentoBares=pedido;
+      try{
+        await pedido;
+      }finally{
+        if(pedidoCarregamentoBares===pedido)pedidoCarregamentoBares=null;
+      }
+    }
+
+    function carregarCacheInicialBares(){
+      const cache=lerCacheBares();
+      if(!cache)return false;
+
+      const inicioRenderizacaoMapa=performance.now();
+      apresentarBares(cache.bares,{ajustarVista:true});
+      const tempoMapaMs=performance.now()-inicioRenderizacaoMapa;
+      console.info('[Finos no Porto] Bares apresentados a partir da cache da sessão.',{
+        bars_received_count:cache.bares.length,
+        cache_age_ms:Math.max(0,Date.now()-cache.guardadoEm)
+      });
+      registarEventoAnalytics('bars_initial_load_complete',{
+        load_time_ms:Math.round(performance.now()),
+        map_render_time_ms:Math.round(tempoMapaMs),
+        bars_received_count:cache.bares.length
+      });
+
+      if(cacheBaresExpirada(cache))carregarBares({silencioso:true});
+      return true;
+    }
+
+    function verificarCacheBaresAoRegressar(){
+      if(document.visibilityState&&document.visibilityState!=='visible')return;
+      const cache=lerCacheBares();
+      if(cacheBaresExpirada(cache))carregarBares({silencioso:carregamentoInicialConcluido});
+    }
+
+    document.addEventListener('visibilitychange',verificarCacheBaresAoRegressar);
+    window.addEventListener('pageshow',verificarCacheBaresAoRegressar);
 
     function abrirMenuLateral(){
       menuLateralElement.classList.add('open');
@@ -1647,7 +1750,7 @@
       setTimeout(()=>submitBarFormElement.scrollIntoView({behavior:'smooth',block:'center'}),80);
     }
 
-    carregarBares();
+    if(!carregarCacheInicialBares())carregarBares();
   </script>
 <section id="consentBanner" class="consent-banner" aria-label="Preferências de estatísticas" aria-describedby="consentDescription" hidden>
   <p class="consent-title">Ajudas-nos a melhorar o Finos no Porto?</p>
