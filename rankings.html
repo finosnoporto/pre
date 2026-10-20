@@ -216,12 +216,17 @@
   <script>
     'use strict';
     const API_URL='https://script.google.com/macros/s/AKfycbxP-5Ibk9MRKdGRNYnXNwdgPwOzi1XUlR4ccm7CGtxHudJsKzRznWniCgN6Ugx-C-4ZiQ/exec';
+    // A mesma cache de sessão utilizada pelo mapa, válida durante uma hora.
+    const BARES_CACHE_KEY='finosnoporto_bares_cache_v1';
+    const BARES_CACHE_TTL_MS=60*60*1000;
     const estadoGeral=document.getElementById('estadoGeral');
     const rankingGeral=document.getElementById('rankingGeral');
     const estadoZona=document.getElementById('estadoZona');
     const rankingZona=document.getElementById('rankingZona');
     const seletorZona=document.getElementById('seletorZona');
     let baresElegiveis=[];
+    let dadosRankingsCarregados=false;
+    let pedidoCarregamentoRankings=null;
 
     function registarEventoAnalytics(nome,parametros={}){
       if(window.__finosAnalyticsConsent==='accepted'&&typeof window.gtag==='function')window.gtag('event',nome,parametros);
@@ -270,36 +275,139 @@
       container.innerHTML=top.map(criarCartao).join('');container.hidden=false;statusEl.hidden=true;
       container.querySelectorAll('.maps-link').forEach(link=>link.addEventListener('click',()=>registarEventoAnalytics('ranking_google_maps_click',{ranking_type:label,bar_id:link.dataset.barId||'unknown'})));
     }
-    function atualizarZona(){
+    function atualizarZona(registarInteracao=true){
       const zona=seletorZona.value;
       if(!zona){mostrarRanking([],rankingZona,estadoZona,'zona');return;}
       mostrarRanking(baresElegiveis.filter(bar=>bar._zona===zona),rankingZona,estadoZona,'zona');
-      registarEventoAnalytics('ranking_zone_selected',{zone:zona});
+      if(registarInteracao)registarEventoAnalytics('ranking_zone_selected',{zone:zona});
     }
-    async function carregarRankings(){
-      const inicio=performance.now();
+    function lerCacheBares(){
       try{
-        const response=await fetch(API_URL);
-        if(!response.ok)throw new Error('Erro HTTP '+response.status);
-        const data=await response.json();
-        if(!data.sucesso||!Array.isArray(data.bares))throw new Error(data.erro||'Resposta da API inválida.');
-        baresElegiveis=data.bares.map(normalizarBar).filter(Boolean);
-        mostrarRanking(baresElegiveis,rankingGeral,estadoGeral,'geral');
-        const zonas=[...new Set(data.bares.map(bar=>texto(bar.zona)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
-        seletorZona.innerHTML='';
-        if(zonas.length){zonas.forEach((zona,i)=>{const option=document.createElement('option');option.value=zona;option.textContent=zona;seletorZona.appendChild(option);});seletorZona.disabled=false;atualizarZona();}
-        else{seletorZona.innerHTML='<option value="">Sem zonas disponíveis</option>';seletorZona.disabled=true;mostrarRanking([],rankingZona,estadoZona,'zona');}
-        registarEventoAnalytics('rankings_loaded',{bars_received:data.bares.length,bars_ranked:baresElegiveis.length,load_time_ms:Math.round(performance.now()-inicio)});
+        const texto=sessionStorage.getItem(BARES_CACHE_KEY);
+        if(!texto)return null;
+        const cache=JSON.parse(texto);
+        if(!cache||!Array.isArray(cache.bares)||!Number.isFinite(cache.guardadoEm))return null;
+        return cache;
       }catch(error){
-        console.error('[Finos no Porto] Erro ao carregar rankings:',error);
-        estadoGeral.hidden=false;estadoGeral.className='status error';estadoGeral.textContent='Não foi possível carregar os preços. Tenta novamente dentro de momentos.';
-        estadoZona.hidden=false;estadoZona.className='status error';estadoZona.textContent='Não foi possível carregar as zonas.';
-        seletorZona.innerHTML='<option value="">Dados indisponíveis</option>';seletorZona.disabled=true;
-        registarEventoAnalytics('rankings_load_failed');
+        // O site continua a funcionar se o armazenamento da sessão não estiver disponível.
+        return null;
       }
     }
+
+    function guardarCacheBares(bares){
+      try{
+        sessionStorage.setItem(BARES_CACHE_KEY,JSON.stringify({guardadoEm:Date.now(),bares}));
+      }catch(error){
+        // Se a cache não puder ser guardada, a página continua a utilizar os dados recebidos.
+      }
+    }
+
+    function cacheBaresExpirada(cache){
+      return !cache||Date.now()-cache.guardadoEm>=BARES_CACHE_TTL_MS;
+    }
+
+    function apresentarRankings(dadosBares,{registarCarregamento=false,inicioCarregamento=null,registarZonaInicial=false}={}){
+      const zonaAnterior=seletorZona.value;
+      baresElegiveis=dadosBares.map(normalizarBar).filter(Boolean);
+      mostrarRanking(baresElegiveis,rankingGeral,estadoGeral,'geral');
+
+      const zonas=[...new Set(dadosBares.map(bar=>texto(bar.zona)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
+      seletorZona.innerHTML='';
+      if(zonas.length){
+        zonas.forEach(zona=>{
+          const option=document.createElement('option');
+          option.value=zona;
+          option.textContent=zona;
+          seletorZona.appendChild(option);
+        });
+        if(zonas.includes(zonaAnterior))seletorZona.value=zonaAnterior;
+        seletorZona.disabled=false;
+        atualizarZona(registarZonaInicial);
+      }else{
+        seletorZona.innerHTML='<option value="">Sem zonas disponíveis</option>';
+        seletorZona.disabled=true;
+        mostrarRanking([],rankingZona,estadoZona,'zona');
+      }
+
+      dadosRankingsCarregados=true;
+      if(registarCarregamento){
+        registarEventoAnalytics('rankings_loaded',{
+          bars_received:dadosBares.length,
+          bars_ranked:baresElegiveis.length,
+          load_time_ms:Math.round(performance.now()-(inicioCarregamento??performance.now()))
+        });
+      }
+    }
+
+    async function carregarRankings({silencioso=false}={}){
+      if(pedidoCarregamentoRankings)return pedidoCarregamentoRankings;
+
+      const pedido=(async()=>{
+        const inicio=performance.now();
+        const primeiraCarga=!dadosRankingsCarregados;
+        try{
+          const response=await fetch(API_URL);
+          if(!response.ok)throw new Error('Erro HTTP '+response.status);
+          const data=await response.json();
+          if(!data.sucesso||!Array.isArray(data.bares))throw new Error(data.erro||'Resposta da API inválida.');
+
+          guardarCacheBares(data.bares);
+          apresentarRankings(data.bares,{
+            registarCarregamento:primeiraCarga,
+            inicioCarregamento:inicio,
+            registarZonaInicial:primeiraCarga
+          });
+        }catch(error){
+          console.error('[Finos no Porto] Erro ao carregar rankings:',error);
+          if(!dadosRankingsCarregados){
+            estadoGeral.hidden=false;
+            estadoGeral.className='status error';
+            estadoGeral.textContent='Não foi possível carregar os preços. Tenta novamente dentro de momentos.';
+            estadoZona.hidden=false;
+            estadoZona.className='status error';
+            estadoZona.textContent='Não foi possível carregar as zonas.';
+            seletorZona.innerHTML='<option value="">Dados indisponíveis</option>';
+            seletorZona.disabled=true;
+            registarEventoAnalytics('rankings_load_failed');
+          }else if(silencioso){
+            // Mantém os rankings da cache visíveis se a atualização não estiver disponível.
+            console.warn('[Finos no Porto] Não foi possível atualizar os rankings; mantêm-se os dados guardados.');
+          }
+        }
+      })();
+
+      pedidoCarregamentoRankings=pedido;
+      try{
+        await pedido;
+      }finally{
+        if(pedidoCarregamentoRankings===pedido)pedidoCarregamentoRankings=null;
+      }
+    }
+
+    function carregarCacheInicialRankings(){
+      const cache=lerCacheBares();
+      if(!cache)return false;
+
+      const inicio=performance.now();
+      apresentarRankings(cache.bares,{
+        registarCarregamento:true,
+        inicioCarregamento:inicio,
+        registarZonaInicial:false
+      });
+      if(cacheBaresExpirada(cache))carregarRankings({silencioso:true});
+      return true;
+    }
+
+    function verificarCacheBaresAoRegressar(){
+      if(document.visibilityState&&document.visibilityState!=='visible')return;
+      const cache=lerCacheBares();
+      if(cacheBaresExpirada(cache))carregarRankings({silencioso:dadosRankingsCarregados});
+    }
+
+    document.addEventListener('visibilitychange',verificarCacheBaresAoRegressar);
+    window.addEventListener('pageshow',verificarCacheBaresAoRegressar);
     seletorZona.addEventListener('change',atualizarZona);
-    carregarRankings();
+    if(!carregarCacheInicialRankings())carregarRankings();
   </script>
 <section id="consentBanner" class="consent-banner" aria-label="Preferências de estatísticas" aria-describedby="consentDescription" hidden>
   <p class="consent-title">Ajudas-nos a melhorar o Finos no Porto?</p>
