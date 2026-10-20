@@ -286,7 +286,7 @@
     .price-marker{position:relative;width:58px;height:72px}
     .price-label{position:absolute;top:0;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #bbb;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#222;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.2);z-index:2}
     .price-label:after{content:'';position:absolute;bottom:-5px;left:50%;width:8px;height:8px;background:#fff;border-right:1px solid #bbb;border-bottom:1px solid #bbb;transform:translateX(-50%) rotate(45deg)}
-    .fino-pin{position:absolute;width:25px;height:41px;left:50%;bottom:0;transform:translateX(-50%);z-index:1;filter:drop-shadow(0 1px 1px rgba(48,35,38,.28))}
+    .blue-pin{position:absolute;width:25px;height:41px;left:50%;bottom:0;transform:translateX(-50%);z-index:1}
 
     .submit-bar-button{
       width:100%;max-width:none;min-height:42px;
@@ -959,10 +959,9 @@
         html:`
           <div class="price-marker">
             <div class="price-label">${text}</div>
-            <svg class="fino-pin" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-              <path d="M12.5 0C5.6 0 0 5.6 0 12.5 0 22.3 12.5 41 12.5 41S25 22.3 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="#d8b15e" stroke="#7b1727" stroke-width="1.5"/>
-              <circle cx="12.5" cy="12.5" r="4.4" fill="#7b1727" stroke="#faf5e9" stroke-width="1"/>
-            </svg>
+            <img class="blue-pin"
+              src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png"
+              alt="">
           </div>
         `,
         iconSize:[58,72],
