@@ -4,7 +4,9 @@
   <link rel="icon" type="image/png" href="logo_site.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Finos no Porto</title>
+  <meta name="description" content="Descobre onde beber cerveja no Porto. Explora o mapa de bares, encontra finos e compara preços para escolher onde beber a próxima cerveja.">
+  <link rel="canonical" href="https://finosnoporto.pt/">
+  <title>Finos no Porto | Mapa de cerveja e preços</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin="">
@@ -702,7 +704,7 @@
     // O fallback mantém o mapa utilizável caso a biblioteca de clustering não carregue.
     const markersLayer=L.markerClusterGroup
       ? L.markerClusterGroup({
-          maxClusterRadius:60,
+          maxClusterRadius:45,
           showCoverageOnHover:false,
           zoomToBoundsOnClick:true,
           spiderfyOnMaxZoom:true,
