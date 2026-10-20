@@ -256,7 +256,7 @@
     .feedback-send:disabled{opacity:.6;cursor:not-allowed}
     .feedback-message{display:none;margin-top:7px;font-size:12px;color:#555;font-weight:600}
     .feedback-message.visible{display:block}
-    /* Agrupamento de bares: mantém a paleta bordô/dourado e reduz a sobreposição. */
+    /* Os clusters usam azul e contorno branco para combinar com os pins Leaflet clássicos. */
     .fino-cluster-icon{
       display:flex;align-items:center;justify-content:center;
       border:0;background:transparent;
@@ -264,13 +264,13 @@
     .fino-cluster-count{
       display:flex;align-items:center;justify-content:center;
       width:100%;height:100%;box-sizing:border-box;
-      border:3px solid var(--brand-gold);border-radius:50%;
-      background:var(--brand-red);color:#fff;
-      box-shadow:0 2px 7px rgba(48,35,38,.28);
+      border:3px solid #fff;border-radius:50%;
+      background:#2a93ee;color:#fff;
+      box-shadow:0 2px 7px rgba(25,70,110,.32),inset 0 0 0 1px rgba(16,76,130,.22);
       font-size:14px;font-weight:800;line-height:1;
     }
     .fino-cluster-icon:focus-visible .fino-cluster-count{
-      outline:3px solid var(--brand-gold);outline-offset:3px;
+      outline:3px solid #1f6fab;outline-offset:3px;
     }
 
     .leaflet-popup-content-wrapper{border-radius:12px}
