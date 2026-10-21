@@ -221,6 +221,16 @@ permalink: /
     }
     .reset-button{margin-top:auto;cursor:pointer;background:var(--brand-cream);border-color:var(--brand-red);color:var(--brand-red);font-weight:700;padding:0 14px}
     .reset-button:hover{background:var(--brand-cream-deep)}
+    .esplanada-toggle{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;
+      border:1px solid var(--brand-red);border-radius:8px;padding:0 13px;
+      background:#fff;color:var(--brand-red);font-size:14px;font-weight:700;
+      cursor:pointer;white-space:nowrap;transition:background .15s ease,color .15s ease,transform .15s ease;
+    }
+    .esplanada-toggle:hover{background:var(--brand-cream)}
+    .esplanada-toggle[aria-pressed="true"]{background:var(--brand-red);color:#fff}
+    .esplanada-toggle:active{transform:translateY(1px)}
+    .esplanada-toggle:focus-visible{outline:3px solid var(--brand-gold);outline-offset:2px}
 
     .status{padding:9px 16px;background:#fff3cd;color:#664d03;font-size:14px;border-bottom:1px solid #ddd;flex-shrink:0}
     .status.error{background:#f8d7da;color:#842029}
@@ -360,6 +370,7 @@ permalink: /
       .filter-group{flex:1;min-width:calc(50% - 5px)}
       .filter-group input,.filter-group select{width:100%;min-width:0}
       .reset-button{width:100%;height:40px;margin-top:1px}
+      .esplanada-toggle{flex:1;min-width:calc(50% - 5px)}
       .finos-location-button{width:42px;height:42px}
       .location-control-message{max-width:min(72vw,240px)}
       .leaflet-popup-content{width:max-content!important;max-width:min(245px,calc(100vw - 70px))!important;margin:8px}
@@ -617,6 +628,7 @@ permalink: /
         <option value="">Todas as zonas</option>
       </select>
     </div>
+    <button id="filtrarEsplanada" class="esplanada-toggle" type="button" aria-pressed="false">Com esplanada</button>
     <button id="limparFiltros" class="reset-button" type="button">Limpar filtros</button>
   </div>
 
@@ -702,6 +714,7 @@ permalink: /
     const resultadosPesquisaElement=document.getElementById('resultadosPesquisa');
     const precoMaxElement=document.getElementById('precoMax');
     const zonaElement=document.getElementById('zona');
+    const filtrarEsplanadaElement=document.getElementById('filtrarEsplanada');
     const limparFiltrosElement=document.getElementById('limparFiltros');
     const mostrarFiltrosElement=document.getElementById('mostrarFiltros');
     const filtersElement=document.getElementById('filters');
@@ -1323,10 +1336,12 @@ permalink: /
       });
 
       // Limpar filtros para garantir que o estabelecimento pesquisado fica visível.
-      const filtrosAtivos=precoMaxElement.value!==''||zonaElement.value!=='';
+      const esplanadaAtiva=filtrarEsplanadaElement.getAttribute('aria-pressed')==='true';
+      const filtrosAtivos=precoMaxElement.value!==''||zonaElement.value!==''||esplanadaAtiva;
       if(filtrosAtivos){
         precoMaxElement.value='';
         zonaElement.value='';
+        filtrarEsplanadaElement.setAttribute('aria-pressed','false');
         mostrarBares();
       }
 
@@ -1384,9 +1399,14 @@ permalink: /
       const precoMaxTexto=precoMaxElement.value.replace(',','.');
       const precoMax=precoMaxTexto===''?null:Number(precoMaxTexto);
       const zonaSelecionada=zonaElement.value;
+      const apenasEsplanada=filtrarEsplanadaElement.getAttribute('aria-pressed')==='true';
 
       return todosOsBares.filter(bar=>{
         const preco=toFiniteNumberOrNull(bar.preco_fino);
+
+        if(apenasEsplanada&&normalizarTextoPesquisa(bar.esplanada_sim_nao)!=='sim'){
+          return false;
+        }
 
         if(precoMax!==null&&Number.isFinite(precoMax)){
           // Bares sem preço não entram num filtro de preço máximo.
@@ -1696,7 +1716,10 @@ permalink: /
         bars_received_count:cache.bares.length
       });
 
-      if(cacheBaresExpirada(cache))carregarBares({silencioso:true});
+      const cacheSemCampoEsplanada=cache.bares.some(bar=>
+        !Object.prototype.hasOwnProperty.call(bar,'esplanada_sim_nao')
+      );
+      if(cacheBaresExpirada(cache)||cacheSemCampoEsplanada)carregarBares({silencioso:true});
       return true;
     }
 
@@ -1802,10 +1825,18 @@ permalink: /
       mostrarBares();
     });
 
+    filtrarEsplanadaElement.addEventListener('click',()=>{
+      const ativo=filtrarEsplanadaElement.getAttribute('aria-pressed')==='true';
+      filtrarEsplanadaElement.setAttribute('aria-pressed',String(!ativo));
+      if(!ativo)registarEventoAnalytics('filter_esplanada_used');
+      mostrarBares();
+    });
+
     limparFiltrosElement.addEventListener('click',()=>{
-      const tinhaFiltros=precoMaxElement.value!==''||zonaElement.value!=='';
+      const tinhaFiltros=precoMaxElement.value!==''||zonaElement.value!==''||filtrarEsplanadaElement.getAttribute('aria-pressed')==='true';
       precoMaxElement.value='';
       zonaElement.value='';
+      filtrarEsplanadaElement.setAttribute('aria-pressed','false');
       if(tinhaFiltros)registarEventoAnalytics('filters_cleared');
       mostrarBares();
     });
