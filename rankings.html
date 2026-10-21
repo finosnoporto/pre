@@ -331,6 +331,7 @@ redirect_from:
           seletorZona.appendChild(option);
         });
         if(zonas.includes(zonaAnterior))seletorZona.value=zonaAnterior;
+        else if(zonas.includes('Baixa'))seletorZona.value='Baixa';
         seletorZona.disabled=false;
         atualizarZona(registarZonaInicial);
       }else{
