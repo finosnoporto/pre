@@ -219,16 +219,30 @@ permalink: /
     .filter-group input:focus,.filter-group select:focus,.submit-group input:focus,.submit-group select:focus{
       outline:2px solid var(--brand-gold);outline-offset:1px;border-color:var(--brand-red);
     }
-    .reset-button{margin-top:auto;cursor:pointer;background:var(--brand-cream);border-color:var(--brand-red);color:var(--brand-red);font-weight:700;padding:0 14px}
+    .reset-button{margin-top:0;cursor:pointer;background:var(--brand-cream);border-color:var(--brand-red);color:var(--brand-red);font-weight:700;padding:0 14px}
     .reset-button:hover{background:var(--brand-cream-deep)}
-    .esplanada-toggle{
-      display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;
-      border:1px solid var(--brand-red);border-radius:8px;padding:0 13px;
-      background:#fff;color:var(--brand-red);font-size:14px;font-weight:700;
-      cursor:pointer;white-space:nowrap;transition:background .15s ease,color .15s ease,transform .15s ease;
+    .filter-bottom-row{
+      display:flex;flex:0 0 100%;width:100%;align-items:stretch;gap:9px;
     }
-    .esplanada-toggle:hover{background:var(--brand-cream)}
-    .esplanada-toggle[aria-pressed="true"]{background:var(--brand-red);color:#fff}
+    .esplanada-control{
+      display:flex;flex:1 1 0;min-width:0;align-items:center;justify-content:space-between;gap:7px;
+      min-height:40px;padding:4px 10px;border:1px solid #d8c9ac;border-radius:8px;background:#fff;
+    }
+    .esplanada-label{font-size:14px;font-weight:700;color:var(--brand-red);white-space:nowrap}
+    .esplanada-toggle{
+      position:relative;display:inline-flex;align-items:center;flex:0 0 56px;
+      width:56px;height:32px;min-height:32px;padding:0;
+      border:1px solid #b9afa3;border-radius:999px;background:#d5cec5;
+      cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .15s ease;
+    }
+    .esplanada-toggle::before{
+      content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+      background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);
+      transition:transform .18s ease;
+    }
+    .esplanada-toggle:hover{filter:brightness(.98)}
+    .esplanada-toggle[aria-pressed="true"]{background:var(--brand-red);border-color:var(--brand-red)}
+    .esplanada-toggle[aria-pressed="true"]::before{transform:translateX(24px)}
     .esplanada-toggle:active{transform:translateY(1px)}
     .esplanada-toggle:focus-visible{outline:3px solid var(--brand-gold);outline-offset:2px}
 
@@ -369,8 +383,12 @@ permalink: /
       .filters{padding:10px 12px;gap:9px}
       .filter-group{flex:1;min-width:calc(50% - 5px)}
       .filter-group input,.filter-group select{width:100%;min-width:0}
-      .reset-button{width:100%;height:40px;margin-top:1px}
-      .esplanada-toggle{flex:1;min-width:calc(50% - 5px)}
+      .filter-bottom-row .reset-button{width:auto;flex:1 1 0;min-width:0;height:40px;margin-top:0;padding:0 8px}
+      .esplanada-control{padding:4px 7px;gap:5px}
+      .esplanada-label{font-size:12px}
+      .esplanada-toggle{flex-basis:52px;width:52px;height:30px;min-height:30px}
+      .esplanada-toggle::before{width:22px;height:22px;top:3px;left:3px}
+      .esplanada-toggle[aria-pressed="true"]::before{transform:translateX(22px)}
       .finos-location-button{width:42px;height:42px}
       .location-control-message{max-width:min(72vw,240px)}
       .leaflet-popup-content{width:max-content!important;max-width:min(245px,calc(100vw - 70px))!important;margin:8px}
@@ -403,6 +421,11 @@ permalink: /
     @media(max-width:360px){
       .top-actions{gap:6px;padding-left:8px;padding-right:8px}
       .filter-button,.submit-bar-button{font-size:12px;padding-left:3px;padding-right:3px}
+      .filter-bottom-row{gap:6px}
+      .esplanada-control{padding:4px 5px;gap:4px}
+      .esplanada-label{font-size:11px}
+      .esplanada-toggle{flex-basis:46px;width:46px}
+      .esplanada-toggle[aria-pressed="true"]::before{transform:translateX(16px)}
       .feedback-form.open{width:180px;grid-template-columns:minmax(0,1fr) 66px}
     }
 
@@ -628,8 +651,13 @@ permalink: /
         <option value="">Todas as zonas</option>
       </select>
     </div>
-    <button id="filtrarEsplanada" class="esplanada-toggle" type="button" aria-pressed="false">Com esplanada</button>
-    <button id="limparFiltros" class="reset-button" type="button">Limpar filtros</button>
+    <div class="filter-bottom-row">
+      <div class="esplanada-control">
+        <span class="esplanada-label" id="filtrarEsplanadaLabel">Com esplanada</span>
+        <button id="filtrarEsplanada" class="esplanada-toggle" type="button" aria-labelledby="filtrarEsplanadaLabel" aria-pressed="false"></button>
+      </div>
+      <button id="limparFiltros" class="reset-button" type="button">Limpar filtros</button>
+    </div>
   </div>
 
 
