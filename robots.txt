@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://finosnoporto.pt/sitemap.xml
